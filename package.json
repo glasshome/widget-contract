@@ -1,0 +1,57 @@
+{
+  "name": "@glasshome/widget-contract",
+  "version": "0.1.0",
+  "description": "Shared widget contract for GlassHome: manifest schema, capability grammar and enforcement predicate, bundle paths, SDK version compatibility",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "@glasshome/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "lint": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "sideEffects": false,
+  "keywords": [
+    "glasshome",
+    "widgets",
+    "capabilities",
+    "manifest",
+    "smart-home"
+  ],
+  "homepage": "https://github.com/glasshome/widget-contract#readme",
+  "bugs": {
+    "url": "https://github.com/glasshome/widget-contract/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glasshome/widget-contract.git"
+  },
+  "author": "GlassHome",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "semver": "^7.7.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "@types/semver": "^7.7.0",
+    "tsdown": "^0.21.4",
+    "typescript": "^5"
+  }
+}
