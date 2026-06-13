@@ -23,7 +23,9 @@ export const capabilityGrantSchema = z.object({
   domain: z.string().regex(DOMAIN_REGEX, "Must be a Home Assistant domain like 'light'"),
   access: z.enum(["read", "control"]),
   entities: z
-    .array(z.string().regex(ENTITY_PATTERN_REGEX, "Must be an entity id pattern like 'light.living_*'"))
+    .array(
+      z.string().regex(ENTITY_PATTERN_REGEX, "Must be an entity id pattern like 'light.living_*'"),
+    )
     .min(1)
     .optional(),
   services: z

@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-contract",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Shared widget contract for GlassHome: manifest schema, capability grammar and enforcement predicate, bundle paths, SDK version compatibility",
   "type": "module",
   "main": "./dist/index.mjs",
@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "lint": "tsc --noEmit",
+    "lint": "biome check . && tsc --noEmit",
     "test": "bun test"
   },
   "sideEffects": false,
@@ -52,6 +52,7 @@
     "@types/bun": "^1.2.0",
     "@types/semver": "^7.7.0",
     "tsdown": "^0.21.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "@biomejs/biome": "2.4.15"
   }
 }

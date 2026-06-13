@@ -57,15 +57,15 @@ describe("publishManifestSchema", () => {
   });
 
   test("1.x manifest with empty capabilities is accepted", () => {
-    expect(
-      publishManifestSchema.safeParse({ ...baseManifest, capabilities: [] }).success,
-    ).toBe(true);
+    expect(publishManifestSchema.safeParse({ ...baseManifest, capabilities: [] }).success).toBe(
+      true,
+    );
   });
 
   test("pre-1.0 manifest without capabilities is accepted (legacy)", () => {
-    expect(
-      publishManifestSchema.safeParse({ ...baseManifest, sdkVersion: "^0.5.2" }).success,
-    ).toBe(true);
+    expect(publishManifestSchema.safeParse({ ...baseManifest, sdkVersion: "^0.5.2" }).success).toBe(
+      true,
+    );
   });
 });
 

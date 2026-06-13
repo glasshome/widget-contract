@@ -63,7 +63,11 @@ describe("matchesCapability — deny by default", () => {
       { domain: "lock", access: "control", entities: ["lock.garage"] },
     ];
     expect(
-      matchesCapability(caps, { domain: "lock", service: "unlock", entityIds: ["lock.front_door"] }),
+      matchesCapability(caps, {
+        domain: "lock",
+        service: "unlock",
+        entityIds: ["lock.front_door"],
+      }),
     ).toBe(false);
     expect(
       matchesCapability(caps, { domain: "lock", service: "unlock", entityIds: ["lock.garage"] }),
@@ -160,9 +164,7 @@ describe("matchesCapability — entity glob narrowing", () => {
   });
 
   test("dots in patterns are literal, not regex wildcards", () => {
-    const caps: CapabilityGrant[] = [
-      { domain: "light", access: "control", entities: ["light.a"] },
-    ];
+    const caps: CapabilityGrant[] = [{ domain: "light", access: "control", entities: ["light.a"] }];
     expect(
       matchesCapability(caps, { domain: "light", service: "turn_on", entityIds: ["lightxa"] }),
     ).toBe(false);
@@ -172,9 +174,7 @@ describe("matchesCapability — entity glob narrowing", () => {
     // Pattern "light.*" with an rpc whose entityIds claim domain "light" but
     // contain a second dot — HA entity ids have exactly one dot, but the
     // predicate must not be the thing that assumes it.
-    const caps: CapabilityGrant[] = [
-      { domain: "light", access: "control", entities: ["light.*"] },
-    ];
+    const caps: CapabilityGrant[] = [{ domain: "light", access: "control", entities: ["light.*"] }];
     expect(
       matchesCapability(caps, {
         domain: "light",
@@ -281,7 +281,9 @@ describe("describeCapability", () => {
   });
 
   test("service narrowing is shown in plain words", () => {
-    expect(describeCapability(lightOnOffOnly)).toBe("Control your lights — only: turn on, turn off");
+    expect(describeCapability(lightOnOffOnly)).toBe(
+      "Control your lights — only: turn on, turn off",
+    );
   });
 
   test("unknown domain falls back to readable generic", () => {
