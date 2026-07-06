@@ -1,6 +1,6 @@
 # @glasshome/widget-contract
 
-The shared contract between every part of the GlassHome widget pipeline: the widget SDK (author declarations), the Hub (publish validation), and Dash (install consent and runtime enforcement).
+The shared contract between every part of the [GlassHome](https://glasshome.app) widget pipeline: the widget SDK (author declarations), the Hub (publish validation), and Dash (install consent and runtime enforcement).
 
 The capability set shown at consent, validated at publish, and enforced at the HA bridge must be computed by the same code. If they drift, the consent screen lies, and that is a vulnerability. This package is that single definition.
 
