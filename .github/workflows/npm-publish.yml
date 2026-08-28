@@ -1,24 +1,47 @@
 name: Publish to npm
 
+# release-please keeps a release PR open on main; merging it creates the tag
+# and the GitHub release, and this same job publishes to npm in one hop.
+# Publishing lives here rather than in a workflow keyed on `release: published`
+# because releases created with GITHUB_TOKEN do not trigger other workflows.
 on:
-  release:
-    types: [published]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
 
 jobs:
-  publish:
+  release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-      - uses: actions/setup-node@v4
+      - uses: googleapis/release-please-action@v4
+        id: release
+        if: github.event_name == 'push'
         with:
-          node-version: "22"
+          release-type: node
+
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+      - uses: oven-sh/setup-bun@v2
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+      # npm >= 11.5.1 (node 24) does the OIDC exchange itself; auth is the
+      # npmjs trusted-publisher binding (org glasshome, this repo, this file).
+      - uses: actions/setup-node@v4
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+        with:
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
       - run: bun install
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
       - run: bun run build
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+      - run: bun run lint
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
+      - run: bun run test
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
       - run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: ${{ steps.release.outputs.release_created || github.event_name == 'workflow_dispatch' }}
