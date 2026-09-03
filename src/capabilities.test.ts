@@ -292,3 +292,162 @@ describe("describeCapability", () => {
     );
   });
 });
+
+describe("matchesCapability — integration services (function and target in different domains)", () => {
+  // Pulse's published grants: Music Assistant and Sonos own no entities, their
+  // services act on the media players granted beside them.
+  const pulse: CapabilityGrant[] = [
+    { domain: "media_player", access: "control" },
+    { domain: "sonos", access: "control" },
+    { domain: "music_assistant", access: "control" },
+  ];
+
+  test("integration service reaches an entity granted by another grant", () => {
+    expect(
+      matchesCapability(pulse, {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.speaker_right"],
+      }),
+    ).toBe(true);
+    expect(
+      matchesCapability(pulse, {
+        domain: "sonos",
+        service: "snapshot",
+        entityIds: ["media_player.speaker_right"],
+      }),
+    ).toBe(true);
+  });
+
+  test("the integration's own entity-less services still need its un-narrowed grant", () => {
+    expect(
+      matchesCapability(pulse, {
+        domain: "music_assistant",
+        service: "get_library",
+        entityIds: [],
+      }),
+    ).toBe(true);
+    expect(
+      matchesCapability([{ domain: "media_player", access: "control" }], {
+        domain: "music_assistant",
+        service: "get_library",
+        entityIds: [],
+      }),
+    ).toBe(false);
+  });
+
+  test("granting the entity does not grant the integration", () => {
+    expect(
+      matchesCapability([{ domain: "media_player", access: "control" }], {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.speaker_right"],
+      }),
+    ).toBe(false);
+  });
+
+  test("granting the integration does not grant every entity", () => {
+    const caps: CapabilityGrant[] = [
+      { domain: "media_player", access: "control", entities: ["media_player.kitchen"] },
+      { domain: "music_assistant", access: "control" },
+    ];
+    expect(
+      matchesCapability(caps, {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.kitchen"],
+      }),
+    ).toBe(true);
+    expect(
+      matchesCapability(caps, {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.bedroom"],
+      }),
+    ).toBe(false);
+  });
+
+  test("an integration grant cannot borrow an unrelated domain's entities to unlock a door", () => {
+    const caps: CapabilityGrant[] = [
+      { domain: "lock", access: "control" },
+      { domain: "music_assistant", access: "control" },
+    ];
+    expect(
+      matchesCapability(caps, {
+        domain: "lock",
+        service: "unlock",
+        entityIds: ["lock.front_door"],
+      }),
+    ).toBe(true);
+    // The lock grant covers the entity, but nothing grants sonos as a function.
+    expect(
+      matchesCapability([{ domain: "lock", access: "control" }], {
+        domain: "sonos",
+        service: "snapshot",
+        entityIds: ["lock.front_door"],
+      }),
+    ).toBe(false);
+  });
+
+  test("a read grant on the entity's domain does not cover an integration call", () => {
+    const caps: CapabilityGrant[] = [
+      { domain: "media_player", access: "read" },
+      { domain: "music_assistant", access: "control" },
+    ];
+    expect(
+      matchesCapability(caps, {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.speaker_right"],
+      }),
+    ).toBe(false);
+  });
+
+  test("a service-narrowed grant covers its entities for its own services only", () => {
+    const caps: CapabilityGrant[] = [
+      { domain: "media_player", access: "control", services: ["media_play"] },
+      { domain: "music_assistant", access: "control" },
+    ];
+    expect(
+      matchesCapability(caps, {
+        domain: "media_player",
+        service: "media_play",
+        entityIds: ["media_player.speaker_right"],
+      }),
+    ).toBe(true);
+    expect(
+      matchesCapability(caps, {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.speaker_right"],
+      }),
+    ).toBe(false);
+  });
+
+  test("an entity-narrowed integration grant is honored as written, not widened", () => {
+    // The narrowed grant answers for living_*; the broad media_player grant
+    // must not extend it to the kitchen.
+    const caps: CapabilityGrant[] = [
+      { domain: "media_player", access: "control" },
+      {
+        domain: "music_assistant",
+        access: "control",
+        entities: ["media_player.living_*"],
+      },
+    ];
+    expect(
+      matchesCapability(caps, {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.living_room"],
+      }),
+    ).toBe(true);
+    expect(
+      matchesCapability(caps, {
+        domain: "music_assistant",
+        service: "get_queue",
+        entityIds: ["media_player.kitchen"],
+      }),
+    ).toBe(false);
+  });
+});

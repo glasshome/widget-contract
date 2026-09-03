@@ -65,25 +65,56 @@ function grantAllowsEntity(grant: CapabilityGrant, entityId: string): boolean {
 }
 
 /**
- * The enforcement predicate. True if some grant authorizes the full call:
- * control access, same domain, service within the grant's service narrowing
- * (or no narrowing), and EVERY targeted entity within the grant's entity
- * narrowing (or, with no narrowing, belonging to the grant's domain).
+ * One grant authorizing a call on its own: control access, same domain,
+ * service within the grant's service narrowing (or no narrowing), and EVERY
+ * targeted entity within its entity narrowing (or, with no narrowing,
+ * belonging to its domain).
  *
- * A call with no entity targets (e.g. a domain-wide service) requires a
- * grant without entity narrowing — a widget scoped to specific entities
- * must not reach domain-wide services.
+ * A call with no entity targets (e.g. a domain-wide service) requires a grant
+ * without entity narrowing — a widget scoped to specific entities must not
+ * reach domain-wide services.
+ */
+function authorizesFully(grant: CapabilityGrant, rpc: ServiceCallRpc): boolean {
+  if (grant.domain !== rpc.domain) return false;
+  if (grant.services && !grant.services.includes(rpc.service)) return false;
+  if (rpc.entityIds.length === 0) return !grant.entities;
+  return rpc.entityIds.every((id) => grantAllowsEntity(grant, id));
+}
+
+/**
+ * The enforcement predicate. Deny-by-default: anything not explicitly matched
+ * is rejected.
  *
- * Deny-by-default: anything not explicitly matched is rejected.
+ * A service call names two things — the function (`music_assistant.get_queue`)
+ * and what it acts on (`media_player.speaker`). They agree for a domain's own
+ * services (`light.turn_on` on `light.kitchen`) and diverge for an
+ * integration's: Music Assistant and Sonos own no entities, so their services
+ * act on `media_player.*`. Requiring one grant to authorize both denies every
+ * integration service, whatever the user approved.
+ *
+ * So: one grant covering the whole call, or else a grant for the function plus
+ * grants covering each entity it touches. Narrowings never combine within a
+ * domain — that path demands the covering grant belong to another domain and
+ * carry no service narrowing of its own.
  */
 export function matchesCapability(caps: readonly CapabilityGrant[], rpc: ServiceCallRpc): boolean {
-  return caps.some((grant) => {
-    if (grant.access !== "control") return false;
-    if (grant.domain !== rpc.domain) return false;
-    if (grant.services && !grant.services.includes(rpc.service)) return false;
-    if (rpc.entityIds.length === 0) return !grant.entities;
-    return rpc.entityIds.every((id) => grantAllowsEntity(grant, id));
-  });
+  const controls = caps.filter((grant) => grant.access === "control");
+  if (controls.some((grant) => authorizesFully(grant, rpc))) return true;
+  if (rpc.entityIds.length === 0) return false;
+
+  const functionGranted = controls.some(
+    (grant) =>
+      grant.domain === rpc.domain &&
+      !grant.entities &&
+      (!grant.services || grant.services.includes(rpc.service)),
+  );
+  if (!functionGranted) return false;
+
+  return rpc.entityIds.every((id) =>
+    controls.some(
+      (grant) => grant.domain !== rpc.domain && !grant.services && grantAllowsEntity(grant, id),
+    ),
+  );
 }
 
 // Friendly plural names for the domains a homeowner will actually see in a
