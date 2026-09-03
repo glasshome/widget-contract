@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-contract",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Shared widget contract for GlassHome: manifest schema, capability grammar and enforcement predicate, bundle paths, SDK version compatibility",
   "type": "module",
   "main": "./dist/index.mjs",
