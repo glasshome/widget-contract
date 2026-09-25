@@ -6,6 +6,7 @@ export {
   capabilityGrantSchema,
   describeCapability,
   matchesCapability,
+  matchesRead,
 } from "./capabilities";
 export type { WidgetManifest } from "./manifest";
 export {

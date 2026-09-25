@@ -117,6 +117,16 @@ export function matchesCapability(caps: readonly CapabilityGrant[], rpc: Service
   );
 }
 
+/**
+ * The read predicate, twin of matchesCapability: a grant of either access
+ * whose domain and entity narrowing cover the entity. Control implies read.
+ */
+export function matchesRead(caps: readonly CapabilityGrant[], entityId: string): boolean {
+  return caps.some(
+    (grant) => entityDomain(entityId) === grant.domain && grantAllowsEntity(grant, entityId),
+  );
+}
+
 // Friendly plural names for the domains a homeowner will actually see in a
 // consent prompt. Anything unlisted falls back to the raw domain name.
 const DOMAIN_LABELS: Record<string, string> = {
@@ -139,6 +149,7 @@ const DOMAIN_LABELS: Record<string, string> = {
   select: "selectors",
   sensor: "sensors",
   siren: "sirens",
+  sun: "sunrise and sunset times",
   switch: "switches",
   vacuum: "vacuums",
   valve: "valves",

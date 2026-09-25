@@ -5,6 +5,7 @@ import {
   capabilityGrantSchema,
   describeCapability,
   matchesCapability,
+  matchesRead,
 } from "./capabilities";
 
 const lightControl: CapabilityGrant = { domain: "light", access: "control" };
@@ -448,6 +449,32 @@ describe("matchesCapability — integration services (function and target in dif
         service: "get_queue",
         entityIds: ["media_player.kitchen"],
       }),
+    ).toBe(false);
+  });
+});
+
+describe("matchesRead", () => {
+  test("a read grant covers entities of its domain", () => {
+    expect(matchesRead([{ domain: "sun", access: "read" }], "sun.sun")).toBe(true);
+  });
+
+  test("control implies read", () => {
+    expect(matchesRead([lightControl], "light.kitchen")).toBe(true);
+  });
+
+  test("no grant for the domain denies", () => {
+    expect(matchesRead([lightRead], "sun.sun")).toBe(false);
+    expect(matchesRead([], "sun.sun")).toBe(false);
+  });
+
+  test("entity narrowing holds for reads", () => {
+    expect(matchesRead([livingLights], "light.living_lamp")).toBe(true);
+    expect(matchesRead([livingLights], "light.kitchen")).toBe(false);
+  });
+
+  test("a narrowing pattern from another domain never covers the entity", () => {
+    expect(
+      matchesRead([{ domain: "light", access: "read", entities: ["light.*"] }], "sun.sun"),
     ).toBe(false);
   });
 });
