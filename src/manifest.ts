@@ -1,3 +1,4 @@
+import { valid } from "semver";
 import { z } from "zod";
 import { capabilitiesSchema } from "./capabilities";
 import { requiresCapabilities } from "./version-compat";
@@ -77,12 +78,30 @@ export const publishManifestSchema = widgetManifestSchema.superRefine((manifest,
 
 const SCOPE_REGEX = /^[a-z0-9][a-z0-9-]*$/;
 
+/** A published widget's name and version become storage keys and CDN paths. */
+export const WIDGET_NAME_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+export const WIDGET_FIELD_LIMITS = {
+  displayName: 100,
+  description: 4000,
+  version: 64,
+} as const;
+
+export const widgetVersionSchema = z
+  .string()
+  .max(WIDGET_FIELD_LIMITS.version)
+  .refine((v) => valid(v) === v, "Must be a semver version like 1.2.0");
+
 export const PublishRequestSchema = z.object({
   ...widgetCoreShape,
   action: z.literal("request"),
   scope: z.string().regex(SCOPE_REGEX, "Must be lowercase alphanumeric with hyphens"),
-  displayName: z.string().min(1),
-  version: z.string().min(1),
+  name: z
+    .string()
+    .regex(WIDGET_NAME_PATTERN, "Must be lowercase alphanumeric with hyphens, up to 64"),
+  displayName: z.string().min(1).max(WIDGET_FIELD_LIMITS.displayName),
+  description: z.string().max(WIDGET_FIELD_LIMITS.description).optional(),
+  version: widgetVersionSchema,
   bundleSize: z.number().int().positive(),
   sha256Hash: z.string().min(1),
   cssSize: z.number().int().positive().optional(),
