@@ -17,7 +17,10 @@ export {
   parseGridSize,
   publishManifestSchema,
   serializeGridSize,
+  WIDGET_FIELD_LIMITS,
+  WIDGET_NAME_PATTERN,
   widgetManifestSchema,
+  widgetVersionSchema,
 } from "./manifest";
 export type { HostProvidedModule } from "./shared-modules";
 export { HOST_PROVIDED_MODULES, isHostProvidedModule } from "./shared-modules";
