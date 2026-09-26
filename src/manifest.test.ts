@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { bundleKey } from "./bundle-key";
-import { publishManifestSchema, widgetManifestSchema } from "./manifest";
+import { PublishRequestSchema, publishManifestSchema, widgetManifestSchema } from "./manifest";
 
 const baseManifest = {
   name: "Clock",
@@ -80,5 +80,49 @@ describe("bundleKey", () => {
     expect(bundleKey("glasshome", "clock", "1.0.0", "index.css")).toBe(
       "@glasshome/clock/1.0.0/index.css",
     );
+  });
+});
+
+describe("publish request names and versions", () => {
+  const request = {
+    action: "request",
+    scope: "glasshome",
+    name: "binary-sensor",
+    displayName: "Binary Sensor",
+    version: "1.2.0",
+    minSize: { w: 1, h: 1 },
+    maxSize: { w: 4, h: 4 },
+    sdkVersion: "^1.0.0",
+    bundleSize: 10,
+    sha256Hash: "abc",
+    manifestJson: "{}",
+  };
+  const accepts = (patch: Record<string, unknown>) =>
+    PublishRequestSchema.safeParse({ ...request, ...patch }).success;
+
+  test("accepts a plain name and a semver version", () => {
+    expect(accepts({})).toBe(true);
+    expect(accepts({ version: "1.0.0-beta.1" })).toBe(true);
+  });
+
+  test("refuses names that could leave their path segment", () => {
+    for (const name of ["..", "%2e%2e", "a/b", "A", "-a", "a".repeat(65), ""]) {
+      expect(accepts({ name })).toBe(false);
+    }
+  });
+
+  test("refuses versions that are not strict semver", () => {
+    for (const version of ["..", "../x", "v1.0.0", "1.0", "1.0.0/..", `1.0.0-${"a".repeat(64)}`]) {
+      expect(accepts({ version })).toBe(false);
+    }
+  });
+});
+
+describe("bundleKey segments", () => {
+  test("refuses dot segments, separators and encodings", () => {
+    for (const bad of ["..", ".", "a/b", "a\\b", "%2e%2e", ""]) {
+      expect(() => bundleKey("glasshome", bad, "1.0.0", "index.js")).toThrow();
+      expect(() => bundleKey("glasshome", "clock", bad, "index.js")).toThrow();
+    }
   });
 });

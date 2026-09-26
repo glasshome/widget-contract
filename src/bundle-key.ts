@@ -7,5 +7,11 @@ export type BundleFile = "index.js" | "index.css";
  * cannot drift across call sites.
  */
 export function bundleKey(scope: string, name: string, version: string, file: BundleFile): string {
+  for (const segment of [scope, name, version]) {
+    if (!isPlainSegment(segment)) throw new Error(`Unsafe bundle path segment: ${segment}`);
+  }
   return `@${scope}/${name}/${version}/${file}`;
 }
+
+const isPlainSegment = (s: string): boolean =>
+  s.length > 0 && s !== "." && s !== ".." && !/[/\\%?#]/.test(s);
