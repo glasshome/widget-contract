@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsdown",
     "lint": "biome check . && tsc --noEmit",
-    "test": "bun test"
+    "test": "bun test",
+    "check:dead": "fallow dead-code --fail-on-issues"
   },
   "sideEffects": false,
   "keywords": [
@@ -49,10 +50,11 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.15",
     "@types/bun": "^1.2.0",
     "@types/semver": "^7.7.0",
+    "fallow": "3.17.0",
     "tsdown": "^0.22.14",
-    "typescript": "^7.0.2",
-    "@biomejs/biome": "2.4.15"
+    "typescript": "^7.0.2"
   }
 }
