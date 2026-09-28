@@ -2,7 +2,28 @@
   "name": "@glasshome/widget-contract",
   "version": "0.3.0",
   "description": "Shared widget contract for GlassHome: manifest schema, capability grammar and enforcement predicate, bundle paths, SDK version compatibility",
+  "keywords": [
+    "capabilities",
+    "glasshome",
+    "manifest",
+    "smart-home",
+    "widgets"
+  ],
+  "homepage": "https://github.com/glasshome/widget-contract#readme",
+  "bugs": {
+    "url": "https://github.com/glasshome/widget-contract/issues"
+  },
+  "license": "MIT",
+  "author": "GlassHome",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/glasshome/widget-contract.git"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
+  "sideEffects": false,
   "main": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "exports": {
@@ -12,49 +33,30 @@
       "import": "./dist/index.mjs"
     }
   },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "tsdown",
-    "lint": "biome check . && tsc --noEmit",
-    "test": "bun test",
-    "check:dead": "fallow dead-code --fail-on-issues"
-  },
-  "sideEffects": false,
-  "keywords": [
-    "glasshome",
-    "widgets",
-    "capabilities",
-    "manifest",
-    "smart-home"
-  ],
-  "homepage": "https://github.com/glasshome/widget-contract#readme",
-  "bugs": {
-    "url": "https://github.com/glasshome/widget-contract/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/glasshome/widget-contract.git"
-  },
-  "author": "GlassHome",
-  "license": "MIT",
   "publishConfig": {
     "access": "public"
   },
-  "engines": {
-    "node": ">=18"
+  "scripts": {
+    "build": "tsdown",
+    "lint": "oxlint --type-aware . && oxfmt --check . && tsc --noEmit",
+    "test": "bun test",
+    "check:dead": "fallow dead-code --fail-on-issues"
   },
   "dependencies": {
     "semver": "^7.7.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.15",
     "@types/bun": "^1.2.0",
     "@types/semver": "^7.7.0",
     "fallow": "3.17.0",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.81.0",
+    "oxlint-tsgolint": "7.0.2001",
     "tsdown": "^0.22.14",
     "typescript": "^7.0.2"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
