@@ -54,11 +54,23 @@ describe("createManualClock", () => {
     expect(n).toBe(3);
   });
 
+  test("clearInterval from inside the callback stops the interval", async () => {
+    const clock = createManualClock(0);
+    let n = 0;
+    const h = clock.setInterval(() => {
+      n++;
+      clock.clearInterval(h);
+    }, 10);
+    await clock.advance(50);
+    expect(n).toBe(1);
+    expect(clock.pending()).toBe(0);
+  });
+
   test("a self re-arming zero-delay timer throws instead of hanging", async () => {
     const clock = createManualClock(0);
     const loop = () => clock.setTimeout(loop, 0);
     loop();
-    expect(clock.advance(1)).rejects.toThrow(/re-arming/);
+    await expect(clock.advance(1)).rejects.toThrow(/re-arming/);
   });
 
   test("setNow shifts pending timers so time never runs backwards", async () => {
@@ -112,7 +124,7 @@ describe("helpers on a manual clock", () => {
     const stop = new AbortController();
     const slept = sleep(clock, 1_000, stop.signal);
     stop.abort();
-    expect(slept).rejects.toThrow();
+    await expect(slept).rejects.toThrow();
     expect(clock.pending()).toBe(0);
   });
 });
