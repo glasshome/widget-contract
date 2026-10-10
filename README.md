@@ -1,6 +1,6 @@
 # @glasshome/widget-contract
 
-The shared contract between every part of the [GlassHome](https://glasshome.app) widget pipeline: the widget SDK (author declarations), the Hub (publish validation), and Dash (install consent and runtime enforcement).
+Contracts shared by every part of GlassHome: the widget pipeline (SDK, Hub, Dash) and the time contract packages and apps are tested against.
 
 The capability set shown at consent, validated at publish, and enforced at the HA bridge must be computed by the same code. If they drift, the consent screen lies, and that is a vulnerability. This package is that single definition.
 
@@ -12,6 +12,7 @@ The capability set shown at consent, validated at publish, and enforced at the H
 - `widgetManifestSchema` / `publishManifestSchema` — the canonical widget manifest schema; the publish variant requires a capabilities declaration for SDK >= 1.0.0 manifests.
 - `bundleKey(scope, name, version, file)` — canonical storage path for published widget files (`index.js` / `index.css`).
 - `checkSdkCompat` / `satisfiesSdk` / `requiresCapabilities` — SDK version compatibility rules shared by loader, installer, and Hub search.
+- `@glasshome/widget-contract/clock`: `Clock`, `systemClock`, `sleep`, `timeoutSignal`, `withDeadline`, and `createManualClock` for tests (design: dash `docs/work/2026-10-11-tests-wait-on-real-time/design.md`).
 
 ## Design notes
 
