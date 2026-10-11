@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/glasshome/widget-contract/compare/v0.3.0...v0.4.0) (2026-10-11)
+
+
+### Features
+
+* **clock:** one time contract with a manual clock for tests ([5ce7f60](https://github.com/glasshome/widget-contract/commit/5ce7f60b88d2693bc274b0350504fff965b965c3))
+
+
+### Bug Fixes
+
+* **clock:** CI and bare bun test stay off the vitest suite, await rejects, cover self-clearing interval ([c90daeb](https://github.com/glasshome/widget-contract/commit/c90daebdd6fa2973835962ad8ef9643664ce51ca))
+
 ## [0.3.0](https://github.com/glasshome/widget-contract/compare/v0.2.1...v0.3.0) (2026-09-27)
 
 
