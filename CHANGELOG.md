@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/glasshome/widget-contract/compare/v0.4.0...v0.4.1) (2026-10-14)
+
+
+### Miscellaneous Chores
+
+* release 0.4.1 ([fe2e617](https://github.com/glasshome/widget-contract/commit/fe2e617315308cb0b8b8957ac6846be5631ec04e))
+
 ## [0.4.0](https://github.com/glasshome/widget-contract/compare/v0.3.0...v0.4.0) (2026-10-11)
 
 
