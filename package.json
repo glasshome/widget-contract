@@ -36,6 +36,11 @@
       "@glasshome/source": "./src/clock.ts",
       "types": "./dist/clock.d.mts",
       "import": "./dist/clock.mjs"
+    },
+    "./sdk-floor": {
+      "@glasshome/source": "./src/sdk-floor.ts",
+      "types": "./dist/sdk-floor.d.mts",
+      "import": "./dist/sdk-floor.mjs"
     }
   },
   "publishConfig": {
