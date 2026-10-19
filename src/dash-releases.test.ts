@@ -58,6 +58,13 @@ describe("dashRequirement", () => {
     });
   });
 
+  test("a widget only older releases run answers null, never unreleased", () => {
+    const running = { version: "1.5.0", stage: null };
+    expect(dashRequirement("~1.21.0", releases, running)).toBeNull();
+    const oldBeta = [...releases, row("1.6.0-beta.1", "beta", "1.30.0")];
+    expect(dashRequirement("~1.22.0", oldBeta, running)).toBeNull();
+  });
+
   test("an unparseable running version or range answers null", () => {
     expect(dashRequirement("^1.21.0", releases, { version: "dev", stage: null })).toBeNull();
     expect(dashRequirement("not a range", releases, { version: "1.3.0", stage: null })).toBeNull();

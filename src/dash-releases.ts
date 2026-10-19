@@ -40,13 +40,14 @@ export function dashRequirement(
     .sort((a, b) => compare(a.version, b.version));
   if (having.length === 0) return { kind: "unreleased" };
 
+  const ahead = having.filter((r) => gt(r.version, running.version));
   const onChannel = (r: DashRelease) => running.stage !== null || r.stage === "stable";
-  const update = having.find((r) => onChannel(r) && gt(r.version, running.version));
+  const update = ahead.find(onChannel);
   if (update) return { kind: "update", version: update.version };
 
-  const newest = having.findLast((r) => r.stage !== "stable");
+  const newest = ahead.findLast((r) => r.stage !== "stable");
   if (newest && newest.stage !== "stable") {
     return { kind: "prerelease", version: newest.version, stage: newest.stage };
   }
-  return { kind: "unreleased" };
+  return null;
 }
