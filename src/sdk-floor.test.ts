@@ -45,36 +45,51 @@ describe("sdkImportsOf", () => {
     expect(sdkImportsOf(`import"@glasshome/widget-sdk";`).size).toBe(0);
   });
 
-  test("an sdk specifier in an import position no clause accounts for fails closed", () => {
-    expect(
-      sdkImportsOf(`import{a}from"@glasshome/widget-sdk"; x.from("@glasshome/widget-sdk")`).has(
-        "*",
-      ),
-    ).toBe(false);
-    expect(
-      sdkImportsOf(
+  test("a comment inside a clause still reads the names", () => {
+    expect([
+      ...sdkImportsOf(
         `import{a,}from"@glasshome/widget-sdk";import {b} /*x*/ from "@glasshome/widget-sdk"`,
-      ).has("*"),
-    ).toBe(false);
+      ),
+    ]).toEqual(["a", "b"]);
+  });
+
+  test("sdk text the lexer does not report as a specifier fails closed", () => {
     expect(
-      sdkImportsOf(`import{a}from"@glasshome/widget-sdk";import from"@glasshome/widget-sdk"`).has(
+      sdkImportsOf(`import{a}from"@glasshome/widget-sdk";const s="@glasshome/widget-sdk";`).has(
         "*",
       ),
     ).toBe(true);
-  });
-
-  test("imports spelled inside strings, comments and templates are not imports", () => {
-    const code = `import{Widget as a}from"@glasshome/widget-sdk";const s='import{useWidgetDimensions}from"@glasshome/widget-sdk"';/* import{useEntity}from"@glasshome/widget-sdk" */const t=\`import{useArea}from"@glasshome/widget-sdk"\${1}\`;`;
-    expect([...sdkImportsOf(code)]).toEqual(["Widget"]);
+    expect(
+      sdkImportsOf(`import{a}from"@glasshome/widget-sdk";/* @glasshome/widget-sdk */`).has("*"),
+    ).toBe(true);
   });
 
   test("a dynamic import inside a template expression is still seen", () => {
     expect(sdkImportsOf('const t=`${await import("@glasshome/widget-sdk")}`;').has("*")).toBe(true);
   });
 
-  test("a quote inside a regex literal does not open a string", () => {
+  test("regex literals and division do not hide sdk imports", () => {
+    expect(
+      sdkImportsOf(
+        'import{a}from"@glasshome/widget-sdk";if(e)/\\//.test(t);import("@glasshome/widget-sdk").then(m=>m.newThing)',
+      ).has("*"),
+    ).toBe(true);
+    expect(sdkImportsOf('if(x)/"/.test(y);export{c}from"@glasshome/widget-sdk"').has("c")).toBe(
+      true,
+    );
+    expect(sdkImportsOf('x=i++/2;const y=import("@glasshome/widget-sdk")').has("*")).toBe(true);
     const code = `const r=/["']/g;import{useEntity as e}from"@glasshome/widget-sdk";const q=a/b/c;`;
     expect([...sdkImportsOf(code)]).toEqual(["useEntity"]);
+  });
+
+  test("a dynamic import without a plain string specifier fails closed", () => {
+    expect(sdkImportsOf("import(`@glasshome/widget-sdk`)").has("*")).toBe(true);
+    expect(sdkImportsOf('import("@glasshome/"+"widget-sdk")').has("*")).toBe(true);
+    expect(sdkImportsOf("import(spec)").has("*")).toBe(true);
+  });
+
+  test("code that does not parse fails closed", () => {
+    expect(sdkImportsOf('import{a}from"@glasshome/widget-sdk";(').has("*")).toBe(true);
   });
 });
 
@@ -130,6 +145,12 @@ describe("exportNames", () => {
       "x",
       "y",
     ]);
+  });
+
+  test("regex literals and strings do not fake an export", () => {
+    expect(
+      exportNames('if(x)/"/.test(y);const s="export{fake}";export{real};', () => null),
+    ).toEqual(["real"]);
   });
 
   test("exports spelled inside strings, comments and templates are not exports", () => {
