@@ -22,6 +22,60 @@ describe("sdkImportsOf", () => {
   test("imports from other modules are ignored", () => {
     expect(sdkImportsOf(`import{useDaylight}from"./local";`).size).toBe(0);
   });
+
+  test("named re-exports of the sdk count their source names", () => {
+    const code = `import{Widget as a}from"@glasshome/widget-sdk";export{useWidgetDimensions as d}from"@glasshome/widget-sdk";`;
+    expect([...sdkImportsOf(code)].sort()).toEqual(["Widget", "useWidgetDimensions"]);
+  });
+
+  test("star re-exports of the sdk count as every export", () => {
+    expect(sdkImportsOf(`export*from"@glasshome/widget-sdk";`).has("*")).toBe(true);
+    expect(sdkImportsOf(`export*as s from"@glasshome/widget-sdk";`).has("*")).toBe(true);
+  });
+
+  test("a default binding beside named or namespace imports is read too", () => {
+    expect([
+      ...sdkImportsOf(`import W,{useWidgetDimensions as u}from"@glasshome/widget-sdk";`),
+    ]).toEqual(["default", "useWidgetDimensions"]);
+    expect(sdkImportsOf(`import W,*as s from"@glasshome/widget-sdk";`).has("*")).toBe(true);
+    expect([...sdkImportsOf(`import W from"@glasshome/widget-sdk";`)]).toEqual(["default"]);
+  });
+
+  test("a bare import adds no names", () => {
+    expect(sdkImportsOf(`import"@glasshome/widget-sdk";`).size).toBe(0);
+  });
+
+  test("an sdk specifier in an import position no clause accounts for fails closed", () => {
+    expect(
+      sdkImportsOf(`import{a}from"@glasshome/widget-sdk"; x.from("@glasshome/widget-sdk")`).has(
+        "*",
+      ),
+    ).toBe(false);
+    expect(
+      sdkImportsOf(
+        `import{a,}from"@glasshome/widget-sdk";import {b} /*x*/ from "@glasshome/widget-sdk"`,
+      ).has("*"),
+    ).toBe(false);
+    expect(
+      sdkImportsOf(`import{a}from"@glasshome/widget-sdk";import from"@glasshome/widget-sdk"`).has(
+        "*",
+      ),
+    ).toBe(true);
+  });
+
+  test("imports spelled inside strings, comments and templates are not imports", () => {
+    const code = `import{Widget as a}from"@glasshome/widget-sdk";const s='import{useWidgetDimensions}from"@glasshome/widget-sdk"';/* import{useEntity}from"@glasshome/widget-sdk" */const t=\`import{useArea}from"@glasshome/widget-sdk"\${1}\`;`;
+    expect([...sdkImportsOf(code)]).toEqual(["Widget"]);
+  });
+
+  test("a dynamic import inside a template expression is still seen", () => {
+    expect(sdkImportsOf('const t=`${await import("@glasshome/widget-sdk")}`;').has("*")).toBe(true);
+  });
+
+  test("a quote inside a regex literal does not open a string", () => {
+    const code = `const r=/["']/g;import{useEntity as e}from"@glasshome/widget-sdk";const q=a/b/c;`;
+    expect([...sdkImportsOf(code)]).toEqual(["useEntity"]);
+  });
 });
 
 describe("uiImportsOf", () => {
@@ -76,6 +130,16 @@ describe("exportNames", () => {
       "x",
       "y",
     ]);
+  });
+
+  test("exports spelled inside strings, comments and templates are not exports", () => {
+    const code = `const s="export { fake }";/* export const ghost=1 */// export * from "pkg"
+const t=\`export{tpl}\${"export { inner }"}\`;export{real};`;
+    expect(exportNames(code, () => null)).toEqual(["real"]);
+  });
+
+  test("a string-named export reads its literal", () => {
+    expect(exportNames(`export{a as "odd name"};`, () => null)).toEqual(["odd name"]);
   });
 
   test("a sibling that cannot be read cannot be scanned", () => {
@@ -142,18 +206,32 @@ describe("deriveFloor", () => {
   });
 
   test("the floor never drops below 1.0.0", () => {
-    const old = { "0.5.0": ["Widget"], "1.9.0": ["Widget"] };
+    const old = { "0.5.0": ["Widget"], "1.0.0": ["Widget"], "1.9.0": ["Widget"] };
     expect(derive(importing("Widget as a"), old)).toEqual({ floor: "1.0.0", reason: "derived" });
   });
 
-  test("the floor never drops below the build sdk's major", () => {
+  test("the floor is a recorded version, never an unrecorded 1.0.0", () => {
+    const old = { "0.5.0": ["Widget"], "1.9.0": ["Widget"] };
+    expect(derive(importing("Widget as a"), old)).toEqual({ floor: "1.9.0", reason: "derived" });
+  });
+
+  test("the floor stays in the build sdk's major, at its lowest recorded version", () => {
     expect(
       deriveFloor({
         code: importing("Widget as a"),
         history: { "1.0.0": ["Widget"], "2.1.0": ["Widget"] },
         buildSdk: "2.1.0",
       }),
-    ).toEqual({ floor: "2.0.0", reason: "derived" });
+    ).toEqual({ floor: "2.1.0", reason: "derived" });
+  });
+
+  test("re-exporting a newer sdk name raises the floor", () => {
+    const code = `${importing("Widget as a")}export{useWidgetDimensions}from"@glasshome/widget-sdk";`;
+    expect(derive(code)).toEqual({ floor: "1.9.0", reason: "derived" });
+    expect(derive(`export*from"@glasshome/widget-sdk";`)).toEqual({
+      floor: "1.9.0",
+      reason: "namespace-import",
+    });
   });
 
   test("other prereleases are skipped; a prerelease build sdk counts", () => {
