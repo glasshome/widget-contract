@@ -36,6 +36,16 @@
       "@glasshome/source": "./src/clock.ts",
       "types": "./dist/clock.d.mts",
       "import": "./dist/clock.mjs"
+    },
+    "./dash-releases": {
+      "@glasshome/source": "./src/dash-releases.ts",
+      "types": "./dist/dash-releases.d.mts",
+      "import": "./dist/dash-releases.mjs"
+    },
+    "./sdk-floor": {
+      "@glasshome/source": "./src/sdk-floor.ts",
+      "types": "./dist/sdk-floor.d.mts",
+      "import": "./dist/sdk-floor.mjs"
     }
   },
   "publishConfig": {
@@ -49,6 +59,7 @@
     "check:dead": "fallow dead-code --fail-on-issues"
   },
   "dependencies": {
+    "es-module-lexer": "^2.3.2",
     "semver": "^7.7.0",
     "zod": "^4.4.3"
   },
