@@ -54,7 +54,7 @@
   "scripts": {
     "build": "tsdown",
     "lint": "oxlint --type-aware . && oxfmt --check . && tsc --noEmit",
-    "test": "bun test src && vitest run tests",
+    "test": "bun test src && TZ=UTC vitest run tests",
     "test:vitest": "vitest run tests",
     "check:dead": "fallow dead-code --fail-on-issues"
   },
