@@ -1,5 +1,5 @@
 export type { BundleFile } from "./bundle-key";
-export { bundleKey } from "./bundle-key";
+export { bundleKey, isPlainSegment } from "./bundle-key";
 export type { CapabilityGrant, ServiceCallRpc } from "./capabilities";
 export {
   capabilitiesSchema,
