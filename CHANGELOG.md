@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.0](https://github.com/glasshome/widget-contract/compare/v0.5.1...v0.6.0) (2026-10-22)
+
+
+### Features
+
+* **contract:** export isPlainSegment, the storage key segment rule ([a8ad4ca](https://github.com/glasshome/widget-contract/commit/a8ad4cacc8490e61605a3ad911d58f43c72b41cd))
+* **contract:** export isPlainSegment, the storage key segment rule ([bc9ffe7](https://github.com/glasshome/widget-contract/commit/bc9ffe770209629336ae98e6abd29f6204192112))
+
 ## [0.5.1](https://github.com/glasshome/widget-contract/compare/v0.5.0...v0.5.1) (2026-10-22)
 
 

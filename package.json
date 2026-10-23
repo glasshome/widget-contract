@@ -1,6 +1,6 @@
 {
   "name": "@glasshome/widget-contract",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "Shared widget contract for GlassHome: manifest schema, capability grammar and enforcement predicate, bundle paths, SDK version compatibility",
   "keywords": [
     "capabilities",
