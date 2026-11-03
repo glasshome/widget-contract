@@ -3,6 +3,7 @@ import {
   type CapabilityGrant,
   capabilitiesSchema,
   capabilityGrantSchema,
+  DOMAIN_LABELS,
   describeCapability,
   matchesCapability,
   matchesRead,
@@ -275,6 +276,13 @@ describe("describeCapability", () => {
 
   test("read sentence", () => {
     expect(describeCapability({ domain: "climate", access: "read" })).toBe("Read your thermostat");
+  });
+
+  test("no two domains share a consent sentence", () => {
+    const sentences = Object.keys(DOMAIN_LABELS).map((domain) =>
+      describeCapability({ domain, access: "read" }),
+    );
+    expect(new Set(sentences).size).toBe(sentences.length);
   });
 
   test("entity narrowing is shown", () => {

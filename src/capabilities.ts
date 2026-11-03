@@ -129,9 +129,9 @@ export function matchesRead(caps: readonly CapabilityGrant[], entityId: string):
 
 // Friendly plural names for the domains a homeowner will actually see in a
 // consent prompt. Anything unlisted falls back to the raw domain name.
-const DOMAIN_LABELS: Record<string, string> = {
+export const DOMAIN_LABELS: Record<string, string> = {
   alarm_control_panel: "alarm system",
-  binary_sensor: "sensors",
+  binary_sensor: "on/off sensors",
   button: "buttons",
   camera: "cameras",
   climate: "thermostat",
