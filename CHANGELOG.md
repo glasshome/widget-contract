@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/glasshome/widget-contract/compare/v0.6.0...v0.6.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* **capabilities:** binary sensors get their own consent sentence, distinct from sensors ([5121b71](https://github.com/glasshome/widget-contract/commit/5121b71a51ab7ed7d8638b34b5c2227d14f14a45))
+
 ## [0.6.0](https://github.com/glasshome/widget-contract/compare/v0.5.1...v0.6.0) (2026-10-22)
 
 
