@@ -294,6 +294,35 @@ describe("review fixes", () => {
     });
     expect(err(validateTranslation("Open", "Ouvrir", "", rules))?.kind).toBe("unknown_locale");
   });
+  test("a plural keeps every source category the target locale has", () => {
+    const fr = "{count, plural, other {# lumières allumées}}";
+    expect(err(validateTranslation(src, fr, "fr", rules))).toEqual({
+      kind: "plural_branches",
+      arg: "count",
+      expected: ["=N", "many", "one", "other"],
+      got: ["other"],
+    });
+    expect(ok(validateTranslation(src, "{count, plural, other {# 個}}", "ja", rules))).toBe(
+      "{count, plural, other {# 個}}",
+    );
+  });
+  test("a kept term in the source must survive", () => {
+    const keep = { ...rules, keep: ["GlassHome", "Home Assistant"] };
+    expect(err(validateTranslation("Open GlassHome", "Ouvrir Glasshome", "fr", keep))).toEqual({
+      kind: "kept_term",
+      term: "GlassHome",
+    });
+    expect(ok(validateTranslation("Open GlassHome", "Ouvrir GlassHome", "fr", keep))).toBe(
+      "Ouvrir GlassHome",
+    );
+    expect(
+      err(validateTranslation("Link Home Assistant", "Lier HomeAssistant", "fr", keep))?.kind,
+    ).toBe("kept_term");
+  });
+  test("a kept term absent from the source is not required", () => {
+    const keep = { ...rules, keep: ["GlassHome"] };
+    expect(ok(validateTranslation("Open GlassHomes", "Ouvrir", "fr", keep))).toBe("Ouvrir");
+  });
   test("source failures name their side and reason", () => {
     expect(err(validateTranslation("{x", "Ouvrir", "fr", rules))).toEqual({
       kind: "value",

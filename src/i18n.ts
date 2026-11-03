@@ -4,7 +4,7 @@ export const CATALOG_LIMITS = {
   keys: 2000,
   keyChars: 128,
   valueChars: 2000,
-  fileBytes: 256 * 1024,
+  fileBytes: 262144,
 } as const;
 
 export const KEY_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*(?:\.[a-z0-9]+(?:[-_][a-z0-9]+)*)*$/;
@@ -44,6 +44,7 @@ export type TranslationError =
   | { kind: "new_url_or_number"; token: string }
   | { kind: "length_ratio"; ratio: number }
   | { kind: "banned_term"; term: string }
+  | { kind: "kept_term"; term: string }
   | { kind: "value"; side: "source" | "translation"; reason: ValueReason };
 
 const fail = <E>(error: E): { ok: false; error: E } => ({ ok: false, error });
@@ -229,6 +230,12 @@ function kindsOf(a: Analysis, arg: string): string[] {
   return sorted(a.kinds.get(arg) ?? []);
 }
 
+function requiredCategories(src: Analysis, arg: string, allowed: ReadonlySet<string>): string[] {
+  const elements = src.pluralElements.filter((el) => el.arg === arg);
+  if (elements.length === 0) return [];
+  return [...allowed].filter((c) => elements.every((el) => el.branches.includes(c)));
+}
+
 function structureError(
   src: Analysis,
   out: Analysis,
@@ -251,8 +258,11 @@ function structureError(
   }
   const allowed = new Set<string>(new Intl.PluralRules(locale).resolvedOptions().pluralCategories);
   for (const { arg, branches } of out.pluralElements) {
+    const required = requiredCategories(src, arg, allowed);
     const valid =
-      branches.every((b) => allowed.has(b) || /^=\d+$/u.test(b)) && branches.includes("other");
+      branches.every((b) => allowed.has(b) || /^=\d+$/u.test(b)) &&
+      branches.includes("other") &&
+      required.every((c) => branches.includes(c));
     if (!valid) {
       return {
         kind: "plural_branches",
@@ -265,11 +275,15 @@ function structureError(
   return undefined;
 }
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+const wholeWord = (term: string) =>
+  new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(term)}(?![\\p{L}\\p{N}])`, "u");
+
 export function validateTranslation(
   source: string,
   translated: string,
   locale: string,
-  rules: { banned: readonly RegExp[]; maxRatio: number },
+  rules: { banned: readonly RegExp[]; maxRatio: number; keep?: readonly string[] },
 ): Result<string, TranslationError> {
   if (!supportedLocale(locale)) return fail({ kind: "unknown_locale", locale });
   const src = checkValue(source);
@@ -288,6 +302,13 @@ export function validateTranslation(
   for (const rule of rules.banned) {
     const match = out.value.text.match(new RegExp(rule.source, rule.flags.replace(/[gy]/gu, "")));
     if (match) return fail({ kind: "banned_term", term: match[0] });
+  }
+
+  for (const term of rules.keep ?? []) {
+    const word = wholeWord(term);
+    if (word.test(src.value.text) && !word.test(out.value.text)) {
+      return fail({ kind: "kept_term", term });
+    }
   }
 
   if (src.value.text.length > 8) {
