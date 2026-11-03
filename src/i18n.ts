@@ -249,7 +249,7 @@ function structureError(
     const got = sorted(out.selects.get(arg) ?? []);
     if (!sameList(expected, got)) return { kind: "select_branches", arg, expected, got };
   }
-  const allowed = new Set(new Intl.PluralRules(locale).resolvedOptions().pluralCategories);
+  const allowed = new Set<string>(new Intl.PluralRules(locale).resolvedOptions().pluralCategories);
   for (const { arg, branches } of out.pluralElements) {
     const valid =
       branches.every((b) => allowed.has(b) || /^=\d+$/u.test(b)) && branches.includes("other");
