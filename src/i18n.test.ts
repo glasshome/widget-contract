@@ -214,7 +214,8 @@ describe("validateTranslation", () => {
   test("invisible characters in a translation are a value error", () => {
     expect(err(validateTranslation("Open", "Ou\u202Evrir", "fr", rules))).toEqual({
       kind: "value",
-      reason: "bad_value",
+      side: "translation",
+      reason: "bidi",
     });
   });
   test("returns the NFC form", () => {
@@ -231,5 +232,73 @@ describe("validateTranslation", () => {
 describe("plural without other", () => {
   test("catalog values need other in plurals", () => {
     expect(err(icuShape("{n, plural, one {x}}"))).toBe("icu_syntax");
+  });
+});
+
+describe("review fixes", () => {
+  const src = "{count, plural, one {# light on} other {# lights on}}";
+  test("each plural element needs its own other", () => {
+    const out = "{count, plural, one {a} other {b}} {count, plural, one {c}}";
+    expect(err(validateTranslation(src, out, "fr", rules))?.kind).toBe("plural_branches");
+  });
+  test("fullwidth digits and dots are folded before token checks", () => {
+    expect(
+      err(validateTranslation("Wait 5 minutes", "Attendre \uFF15\uFF10 minutes", "fr", rules)),
+    ).toEqual({
+      kind: "new_url_or_number",
+      token: "50",
+    });
+    expect(
+      err(validateTranslation("Contact us", "Voir evil\uFF0Eexample", "fr", rules))?.kind,
+    ).toBe("new_url_or_number");
+    expect(
+      err(validateTranslation("Contact us", "Voir evil\u3002example", "fr", rules))?.kind,
+    ).toBe("new_url_or_number");
+  });
+  test("angle brackets in literal text are refused", () => {
+    const html = JSON.stringify({ a: "Hi '<img src=x onerror=alert(1)>' there" });
+    expect(err(parseCatalog(html))).toEqual({ kind: "bad_value", key: "a", reason: "icu_feature" });
+    expect(err(validateTranslation("Hi there", "Salut '<img/>'", "fr", rules))).toEqual({
+      kind: "value",
+      side: "translation",
+      reason: "icu_feature",
+    });
+  });
+  test("argument kind must match the source", () => {
+    expect(err(validateTranslation(src, "{count} lumi\u00E8res", "fr", rules))).toEqual({
+      kind: "arg_kind",
+      arg: "count",
+      expected: ["plural"],
+      got: ["plain"],
+    });
+    expect(
+      err(validateTranslation(src, "{count, select, one {a} other {b}}", "fr", rules))?.kind,
+    ).toBe("arg_kind");
+  });
+  test("select keys must equal the source's", () => {
+    const s = "{x, select, a {A} other {B}}";
+    expect(err(validateTranslation(s, "{x, select, b {A} other {B}}", "fr", rules))).toEqual({
+      kind: "select_branches",
+      arg: "x",
+      expected: ["a", "other"],
+      got: ["b", "other"],
+    });
+  });
+  test("lone surrogates are control characters", () => {
+    expect(err(sanitizeValue("a\uD800b"))).toBe("control_char");
+  });
+  test("unsupported locale is an error", () => {
+    expect(err(validateTranslation("Open", "Ouvrir", "xx-not-a-locale-0", rules))).toEqual({
+      kind: "unknown_locale",
+      locale: "xx-not-a-locale-0",
+    });
+    expect(err(validateTranslation("Open", "Ouvrir", "", rules))?.kind).toBe("unknown_locale");
+  });
+  test("source failures name their side and reason", () => {
+    expect(err(validateTranslation("{x", "Ouvrir", "fr", rules))).toEqual({
+      kind: "value",
+      side: "source",
+      reason: "icu_syntax",
+    });
   });
 });
