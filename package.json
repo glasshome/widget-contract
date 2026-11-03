@@ -37,6 +37,11 @@
       "types": "./dist/clock.d.mts",
       "import": "./dist/clock.mjs"
     },
+    "./i18n": {
+      "@glasshome/source": "./src/i18n.ts",
+      "types": "./dist/i18n.d.mts",
+      "import": "./dist/i18n.mjs"
+    },
     "./dash-releases": {
       "@glasshome/source": "./src/dash-releases.ts",
       "types": "./dist/dash-releases.d.mts",
@@ -64,6 +69,7 @@
     "check:dead": "fallow dead-code --fail-on-issues"
   },
   "dependencies": {
+    "@formatjs/icu-messageformat-parser": "3.5.22",
     "es-module-lexer": "^2.3.2",
     "semver": "^7.7.0",
     "zod": "^4.4.3"
