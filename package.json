@@ -46,6 +46,11 @@
       "@glasshome/source": "./src/sdk-floor.ts",
       "types": "./dist/sdk-floor.d.mts",
       "import": "./dist/sdk-floor.mjs"
+    },
+    "./state": {
+      "@glasshome/source": "./src/state.ts",
+      "types": "./dist/state.d.mts",
+      "import": "./dist/state.mjs"
     }
   },
   "publishConfig": {
