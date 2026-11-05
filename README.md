@@ -13,6 +13,7 @@ The capability set shown at consent, validated at publish, and enforced at the H
 - `bundleKey(scope, name, version, file)` — canonical storage path for published widget files (`index.js` / `index.css`).
 - `checkSdkCompat` / `satisfiesSdk` / `requiresCapabilities` — SDK version compatibility rules shared by loader, installer, and Hub search.
 - `@glasshome/widget-contract/clock`: `Clock`, `systemClock`, `sleep`, `timeoutSignal`, `withDeadline`, and `createManualClock` for tests (design: dash `docs/work/2026-10-11-tests-wait-on-real-time/design.md`).
+- `@glasshome/widget-contract/state`: `WIDGET_STATE_LIMITS`, `checkWidgetStateWrite`, the key and value schemas, and `createMemoryWidgetState`, the one owner of every widget state limit (dash `docs/work/2026-11-01-widget-state-survives-reload`).
 
 ## Design notes
 
