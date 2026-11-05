@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/glasshome/widget-contract/compare/v0.6.1...v0.7.0) (2026-11-05)
+
+
+### Features
+
+* **state:** widget state limits and memory store, one owner for every cap ([89303a1](https://github.com/glasshome/widget-contract/commit/89303a12f199130989b2182060c64aa315ea36ae))
+* **state:** widget state limits and memory store, one owner for every cap ([5002ecb](https://github.com/glasshome/widget-contract/commit/5002ecbedc540fd2ef90018953cd9f0daee4808a))
+
 ## [0.6.1](https://github.com/glasshome/widget-contract/compare/v0.6.0...v0.6.1) (2026-11-03)
 
 
