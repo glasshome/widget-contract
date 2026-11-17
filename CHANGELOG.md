@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.8.0](https://github.com/glasshome/widget-contract/compare/v0.7.0...v0.8.0) (2026-11-17)
+
+
+### Features
+
+* **sdk-floor:** deriveFloor refuses an export history that skips a release ([8c09a76](https://github.com/glasshome/widget-contract/commit/8c09a7613c6dd6be0430c785d6be4837a0c03d8b))
+* **sdk-floor:** deriveFloor reports a history that skips a release as incomplete ([1c1f101](https://github.com/glasshome/widget-contract/commit/1c1f101dd67f2dbec746c1adbc235b50319483de))
+* **sdk-floor:** deriveFloor requires the releases it must cover or "trusted" ([3acb773](https://github.com/glasshome/widget-contract/commit/3acb773e633683a423d3c9e7ac6ea9137c97096a))
+
 ## [0.7.0](https://github.com/glasshome/widget-contract/compare/v0.6.1...v0.7.0) (2026-11-05)
 
 
