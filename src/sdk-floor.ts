@@ -192,17 +192,53 @@ export function compareSdkVersions(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
+/** Stable versions a changelog lists as `## [x.y.z]` headings, oldest first: the offline list of releases that publish and the governor gate check a history against. */
+export function releasesInChangelog(changelog: string): string[] {
+  const found = [...changelog.matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm)].map((m) => m[1] ?? "");
+  return [...new Set(found)].sort(compareSdkVersions);
+}
+
+/** Stable releases in the build's major, from 1.0.0 up to the build, that the history has no entry for. */
+export function missingReleases(
+  history: Record<string, string[]>,
+  releases: readonly string[],
+  buildSdk: string,
+): string[] {
+  const build = parseVersion(buildSdk);
+  if (!build) return [];
+  return releases
+    .filter((release) => {
+      const v = parseVersion(release);
+      return (
+        v !== null &&
+        v.prerelease === undefined &&
+        v.major === build.major &&
+        v.major >= 1 &&
+        compareVersions(v, build) < 0 &&
+        !(release in history)
+      );
+    })
+    .sort(compareSdkVersions);
+}
+
 export type FloorResult =
   | { floor: string; reason: "derived" | "namespace-import" | "direct-ui-import" }
-  | { refused: string[] };
+  | { refused: string[] }
+  | { incomplete: string[] };
 
-/** Lowest recorded release in the build SDK's major from which every imported name stays exported. */
+/**
+ * Lowest recorded release in the build SDK's major from which every imported name stays exported.
+ * A history that skips one of `releases` is `incomplete`: the floor would sit at the newest release
+ * that was recorded, in place of the one that added the name. `"trusted"` states that the history
+ * is complete by construction, as a published SDK's is.
+ */
 export function deriveFloor(input: {
   code: string;
   history: Record<string, string[]>;
   buildSdk: string;
+  releases: readonly string[] | "trusted";
 }): FloorResult {
-  const { code, history, buildSdk } = input;
+  const { code, history, buildSdk, releases } = input;
   const imported = sdkImportsOf(code);
   if (imported.has("*")) return { floor: buildSdk, reason: "namespace-import" };
 
@@ -215,6 +251,9 @@ export function deriveFloor(input: {
 
   const build = parseVersion(buildSdk);
   if (!build) return { refused: names };
+
+  const gaps = releases === "trusted" ? [] : missingReleases(history, releases, buildSdk);
+  if (gaps.length > 0) return { incomplete: gaps };
 
   const older = Object.keys(history)
     .map((key) => ({ key, version: parseVersion(key) }))
