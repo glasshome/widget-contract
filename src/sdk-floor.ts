@@ -192,7 +192,7 @@ export function compareSdkVersions(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
 
-/** Stable versions a changelog lists as `## [x.y.z]` headings, oldest first. */
+/** Stable versions a changelog lists as `## [x.y.z]` headings, oldest first: the offline list of releases that publish and the governor gate check a history against. */
 export function releasesInChangelog(changelog: string): string[] {
   const found = [...changelog.matchAll(/^## \[(\d+\.\d+\.\d+)\]/gm)].map((m) => m[1] ?? "");
   return [...new Set(found)].sort(compareSdkVersions);
