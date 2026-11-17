@@ -201,7 +201,7 @@ export function releasesInChangelog(changelog: string): string[] {
 /** Stable releases in the build's major, from 1.0.0 up to the build, that the history has no entry for. */
 export function missingReleases(
   history: Record<string, string[]>,
-  releases: string[],
+  releases: readonly string[],
   buildSdk: string,
 ): string[] {
   const build = parseVersion(buildSdk);
@@ -228,14 +228,15 @@ export type FloorResult =
 
 /**
  * Lowest recorded release in the build SDK's major from which every imported name stays exported.
- * With `releases`, a history that skips one of them is `incomplete`: the floor would sit at the
- * newest release that was recorded, in place of the one that added the name.
+ * A history that skips one of `releases` is `incomplete`: the floor would sit at the newest release
+ * that was recorded, in place of the one that added the name. `"trusted"` states that the history
+ * is complete by construction, as a published SDK's is.
  */
 export function deriveFloor(input: {
   code: string;
   history: Record<string, string[]>;
   buildSdk: string;
-  releases?: string[];
+  releases: readonly string[] | "trusted";
 }): FloorResult {
   const { code, history, buildSdk, releases } = input;
   const imported = sdkImportsOf(code);
@@ -251,7 +252,7 @@ export function deriveFloor(input: {
   const build = parseVersion(buildSdk);
   if (!build) return { refused: names };
 
-  const gaps = missingReleases(history, releases ?? [], buildSdk);
+  const gaps = releases === "trusted" ? [] : missingReleases(history, releases, buildSdk);
   if (gaps.length > 0) return { incomplete: gaps };
 
   const older = Object.keys(history)
