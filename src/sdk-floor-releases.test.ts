@@ -55,6 +55,14 @@ describe("deriveFloor with the releases it must cover", () => {
     });
   });
 
+  test("a trusted history is read as it stands, hole or not", () => {
+    const stale = { ...committed, "1.27.0": ["Widget", "useThing"] };
+    expect(deriveFloor({ code, history: stale, buildSdk: "1.27.0", releases: "trusted" })).toEqual({
+      floor: "1.27.0",
+      reason: "derived",
+    });
+  });
+
   test("a namespace import needs no history, so a gap does not matter", () => {
     expect(
       deriveFloor({

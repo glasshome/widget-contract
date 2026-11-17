@@ -186,7 +186,7 @@ describe("deriveFloor", () => {
     "1.9.0": ["Widget", "useEntity", "useWidgetDimensions"],
   };
   const derive = (code: string, h: Record<string, string[]> = history) =>
-    deriveFloor({ code, history: h, buildSdk: "1.9.0" });
+    deriveFloor({ code, history: h, buildSdk: "1.9.0", releases: "trusted" });
   const importing = (names: string) => `import{${names}}from"@glasshome/widget-sdk";`;
 
   test("the floor is the lowest version exporting every imported name", () => {
@@ -242,6 +242,7 @@ describe("deriveFloor", () => {
         code: importing("Widget as a"),
         history: { "1.0.0": ["Widget"], "2.1.0": ["Widget"] },
         buildSdk: "2.1.0",
+        releases: "trusted",
       }),
     ).toEqual({ floor: "2.1.0", reason: "derived" });
   });
@@ -262,7 +263,12 @@ describe("deriveFloor", () => {
       "1.9.0-rc.1": ["Widget", "useWidgetDimensions"],
     };
     expect(
-      deriveFloor({ code: importing("Widget as a"), history: pre, buildSdk: "1.9.0-rc.1" }),
+      deriveFloor({
+        code: importing("Widget as a"),
+        history: pre,
+        buildSdk: "1.9.0-rc.1",
+        releases: "trusted",
+      }),
     ).toEqual({ floor: "1.0.0", reason: "derived" });
   });
 
@@ -272,7 +278,14 @@ describe("deriveFloor", () => {
   });
 
   test("a build sdk missing from the history refuses every imported name", () => {
-    expect(deriveFloor({ code: importing("Widget as a"), history, buildSdk: "1.9.1" })).toEqual({
+    expect(
+      deriveFloor({
+        code: importing("Widget as a"),
+        history,
+        buildSdk: "1.9.1",
+        releases: "trusted",
+      }),
+    ).toEqual({
       refused: ["Widget"],
     });
   });
