@@ -1,4 +1,5 @@
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
+import type { CompiledMessage, MessagePart } from "./i18n-format";
 
 export const CATALOG_LIMITS = {
   keys: 2000,
@@ -10,6 +11,12 @@ export const CATALOG_LIMITS = {
 export const KEY_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*(?:\.[a-z0-9]+(?:[-_][a-z0-9]+)*)*$/;
 
 const MAX_ICU_DEPTH = 8;
+
+const PARSE_OPTIONS = {
+  ignoreTag: false,
+  requiresOtherClause: false,
+  shouldParseSkeletons: false,
+} as const;
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; error: E };
 
@@ -74,11 +81,7 @@ function analyze(
 ): Result<Analysis, "icu_syntax" | "icu_feature"> {
   let ast: MessageFormatElement[];
   try {
-    ast = parse(value, {
-      ignoreTag: false,
-      requiresOtherClause: false,
-      shouldParseSkeletons: false,
-    });
+    ast = parse(value, PARSE_OPTIONS);
   } catch {
     return fail("icu_syntax");
   }
@@ -151,6 +154,42 @@ function analyze(
 export function icuShape(value: string): Result<IcuShape, "icu_syntax" | "icu_feature"> {
   const analysis = analyze(value);
   return analysis.ok ? succeed(analysis.value.shape) : analysis;
+}
+
+function compileElements(elements: MessageFormatElement[]): MessagePart[] {
+  const parts: MessagePart[] = [];
+  const branches = (options: Record<string, { value: MessageFormatElement[] }>) =>
+    Object.fromEntries(
+      Object.entries(options).map(([name, option]) => [name, compileElements(option.value)]),
+    );
+  for (const el of elements) {
+    switch (el.type) {
+      case TYPE.literal:
+        parts.push(el.value);
+        break;
+      case TYPE.argument:
+        parts.push({ arg: el.value });
+        break;
+      case TYPE.pound:
+        parts.push({ pound: true });
+        break;
+      case TYPE.plural:
+        parts.push({ plural: el.value, branches: branches(el.options) });
+        break;
+      case TYPE.select:
+        parts.push({ select: el.value, branches: branches(el.options) });
+        break;
+    }
+  }
+  return parts;
+}
+
+export function compileMessage(
+  source: string,
+): Result<CompiledMessage, "icu_syntax" | "icu_feature"> {
+  const analysis = analyze(source);
+  if (!analysis.ok) return analysis;
+  return succeed(compileElements(parse(source, PARSE_OPTIONS)));
 }
 
 function checkValue(

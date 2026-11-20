@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   CATALOG_LIMITS,
   KEY_PATTERN,
+  compileMessage,
   icuShape,
   parseCatalog,
   sanitizeValue,
@@ -329,5 +330,25 @@ describe("review fixes", () => {
       side: "source",
       reason: "icu_syntax",
     });
+  });
+});
+
+describe("compileMessage", () => {
+  test("literal and argument", () => {
+    expect(ok(compileMessage("Good evening, {name}"))).toEqual(["Good evening, ", { arg: "name" }]);
+  });
+  test("number format is a feature error", () => {
+    expect(err(compileMessage("{n, number}"))).toBe("icu_feature");
+  });
+  test("syntax error", () => {
+    expect(err(compileMessage("{oops"))).toBe("icu_syntax");
+  });
+  test("plural keeps exact selectors and the pound", () => {
+    expect(ok(compileMessage("{c, plural, =0 {none} other {# x}}"))).toEqual([
+      {
+        plural: "c",
+        branches: { "=0": ["none"], other: [{ pound: true }, " x"] },
+      },
+    ]);
   });
 });
