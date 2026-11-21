@@ -42,6 +42,11 @@
       "types": "./dist/i18n.d.mts",
       "import": "./dist/i18n.mjs"
     },
+    "./catalog-build": {
+      "@glasshome/source": "./src/catalog-build.ts",
+      "types": "./dist/catalog-build.d.mts",
+      "import": "./dist/catalog-build.mjs"
+    },
     "./i18n-format": {
       "@glasshome/source": "./src/i18n-format.ts",
       "types": "./dist/i18n-format.d.mts",

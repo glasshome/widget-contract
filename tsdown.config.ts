@@ -6,6 +6,7 @@ export default defineConfig({
     "src/clock.ts",
     "src/i18n.ts",
     "src/i18n-format.ts",
+    "src/catalog-build.ts",
     "src/sdk-floor.ts",
     "src/dash-releases.ts",
     "src/state.ts",
