@@ -167,6 +167,49 @@ describe("validateTranslation", () => {
       "plural_branches",
     );
   });
+  describe("spliced blocks", () => {
+    const sentence =
+      "Take {count, plural, one {it} other {them}} off, then {count, plural, one {share} other {share}} now.";
+    test("rejects a hyphen branch after a space (fr)", () => {
+      const fr = "Retirez {count, plural, one {-le} other {-les}} de là, puis partagez.";
+      expect(err(validateTranslation(sentence, fr, "fr", rules))).toEqual({
+        kind: "spliced_block",
+        arg: "count",
+      });
+    });
+    test("rejects a suffix spliced into a word (es)", () => {
+      const es =
+        "Quítal{count, plural, one {o} other {os}} ya, {count, plural, one {y} other {y}} listo.";
+      expect(err(validateTranslation(sentence, es, "es", rules))?.kind).toBe("spliced_block");
+    });
+    test("accepts whole-phrase branches", () => {
+      const fr =
+        "{count, plural, one {Retirez-le, puis partagez.} other {Retirez-les, puis partagez.}}";
+      expect(
+        ok(
+          validateTranslation(
+            "{count, plural, one {Take it off.} other {Take them off.}}",
+            fr,
+            "fr",
+            rules,
+          ),
+        ),
+      ).toBe(fr);
+    });
+    test("accepts a block set off by spaces", () => {
+      const fr = "{names} {count, plural, one {existe} other {existent}} ici.";
+      expect(
+        ok(
+          validateTranslation(
+            "{names} {count, plural, one {lives} other {live}} here.",
+            fr,
+            "fr",
+            rules,
+          ),
+        ),
+      ).toBe(fr);
+    });
+  });
   test("argument renamed", () => {
     expect(err(validateTranslation("Hello {name}", "Bonjour {nom}", "fr", rules))).toEqual({
       kind: "args_differ",

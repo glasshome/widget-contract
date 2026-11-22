@@ -52,6 +52,7 @@ export type TranslationError =
   | { kind: "length_ratio"; ratio: number }
   | { kind: "banned_term"; term: string }
   | { kind: "kept_term"; term: string }
+  | { kind: "spliced_block"; arg: string }
   | { kind: "value"; side: "source" | "translation"; reason: ValueReason };
 
 const fail = <E>(error: E): { ok: false; error: E } => ({ ok: false, error });
@@ -318,6 +319,26 @@ const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$
 const wholeWord = (term: string) =>
   new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegExp(term)}(?![\\p{L}\\p{N}])`, "u");
 
+const WORD_EDGE_END = /[\p{L}-]$/u;
+const WORD_EDGE_START = /^[\p{L}-]/u;
+
+function splicedBlock(elements: MessageFormatElement[]): string | undefined {
+  for (const [i, el] of elements.entries()) {
+    if (el.type !== TYPE.plural && el.type !== TYPE.select) continue;
+    const before = elements[i - 1];
+    const after = elements[i + 1];
+    if (before?.type === TYPE.literal && WORD_EDGE_END.test(before.value)) return el.value;
+    if (after?.type === TYPE.literal && WORD_EDGE_START.test(after.value)) return el.value;
+    for (const option of Object.values(el.options)) {
+      const first = option.value[0];
+      if (first?.type === TYPE.literal && first.value.startsWith("-")) return el.value;
+      const nested = splicedBlock(option.value);
+      if (nested) return nested;
+    }
+  }
+  return undefined;
+}
+
 export function validateTranslation(
   source: string,
   translated: string,
@@ -332,6 +353,9 @@ export function validateTranslation(
 
   const structure = structureError(src.value, out.value, locale);
   if (structure) return fail(structure);
+
+  const spliced = splicedBlock(parse(out.value.text, PARSE_OPTIONS));
+  if (spliced) return fail({ kind: "spliced_block", arg: spliced });
 
   const known = new Set(tokens(src.value.literals));
   for (const token of tokens(out.value.literals)) {
