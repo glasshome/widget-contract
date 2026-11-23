@@ -1,15 +1,13 @@
 export type StateGroup = Readonly<Record<string, string>>;
 
+export interface StateWords {
+  state?: StateGroup;
+  attributes?: Readonly<Record<string, StateGroup>>;
+}
+
 export interface StateTexts {
-  component: Readonly<Record<string, Readonly<Record<string, StateGroup>>>>;
-  entity: Readonly<
-    Record<
-      string,
-      Readonly<
-        Record<string, { state?: StateGroup; attributes?: Readonly<Record<string, StateGroup>> }>
-      >
-    >
-  >;
+  component: Readonly<Record<string, Readonly<Record<string, StateWords>>>>;
+  entity: Readonly<Record<string, Readonly<Record<string, Readonly<Record<string, StateWords>>>>>>;
 }
 
 export interface StateQuery {
@@ -29,14 +27,16 @@ function own<T>(
   return map[key];
 }
 
+function wordOf(words: StateWords | undefined, q: StateQuery): string | undefined {
+  const group = q.attribute === undefined ? words?.state : own(words?.attributes, q.attribute);
+  return own(group, q.state);
+}
+
 export function stateText(texts: StateTexts, q: StateQuery): string | undefined {
-  const entity = own(own(texts.entity, q.platform), q.translationKey);
-  const entityGroup =
-    q.attribute === undefined ? entity?.state : own(entity?.attributes, q.attribute);
-  const fromEntity = own(entityGroup, q.state);
+  const entity = own(own(own(texts.entity, q.platform), q.domain), q.translationKey);
+  const fromEntity = wordOf(entity, q);
   if (fromEntity !== undefined) return fromEntity;
-  if (q.attribute !== undefined) return undefined;
 
   const domain = own(texts.component, q.domain);
-  return own(own(domain, q.deviceClass), q.state) ?? own(own(domain, "_"), q.state);
+  return wordOf(own(domain, q.deviceClass), q) ?? wordOf(own(domain, "_"), q);
 }

@@ -3,15 +3,23 @@ import { stateText, type StateTexts } from "./state-texts";
 
 const texts: StateTexts = {
   component: {
-    cover: { _: { open: "Offen" }, garage: { open: "Garage offen" } },
-    climate: { _: { heat: "Heizen" } },
+    cover: { _: { state: { open: "Offen" } }, garage: { state: { open: "Garage offen" } } },
+    climate: {
+      _: { state: { heat: "Heizen" }, attributes: { preset_mode: { eco: "Eco" } } },
+    },
   },
   entity: {
     ring: {
-      siren: {
-        state: { open: "Ring offen" },
-        attributes: { mode: { loud: "Laut" } },
+      cover: {
+        siren: {
+          state: { open: "Ring offen" },
+          attributes: { mode: { loud: "Laut" } },
+        },
       },
+    },
+    unifi_access: {
+      select: { door_lock_rule: { state: { keep_lock: "Verriegelt lassen" } } },
+      sensor: { door_lock_rule: { state: { keep_lock: "Verriegelt" } } },
     },
   },
 };
@@ -48,4 +56,18 @@ test("prototype names and huge states find nothing", () => {
       translationKey: "x",
     }),
   ).toBe("Offen");
+});
+
+test("an entity key reads under its own domain", () => {
+  const q = { platform: "unifi_access", translationKey: "door_lock_rule", state: "keep_lock" };
+  expect(stateText(texts, { ...q, domain: "select" })).toBe("Verriegelt lassen");
+  expect(stateText(texts, { ...q, domain: "sensor" })).toBe("Verriegelt");
+  expect(stateText(texts, { ...q, domain: "lock" })).toBeUndefined();
+});
+
+test("an attribute with no entity words falls back to the domain's", () => {
+  const q = { domain: "climate", attribute: "preset_mode", state: "eco" };
+  expect(stateText(texts, q)).toBe("Eco");
+  expect(stateText(texts, { ...q, platform: "ring", translationKey: "none" })).toBe("Eco");
+  expect(stateText(texts, { ...q, attribute: "fan_mode" })).toBeUndefined();
 });
