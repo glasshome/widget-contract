@@ -188,8 +188,50 @@ describe("reservedRefusals", () => {
     const long = "k".repeat(CATALOG_LIMITS.keyChars + 1);
     const m = withSchema({ properties: { [long]: { title: "T" } } });
     expect(reservedRefusals(m, {}).map((r) => r.reason)).toEqual(["key-too-long"]);
-    const text = manifest({ description: "d".repeat(CATALOG_LIMITS.valueChars + 1) });
+    const text = withSchema({
+      properties: { mode: { title: "t".repeat(CATALOG_LIMITS.valueChars + 1) } },
+    });
     expect(reservedRefusals(text, {}).map((r) => r.reason)).toEqual(["too-long"]);
+  });
+});
+
+describe("duplicate keys", () => {
+  const labelsClash = withSchema({
+    properties: { mode: { labels: { title: "X" }, properties: { labels: { title: "Y" } } } },
+  });
+
+  test("labels entry and a child property named labels refuse, first value kept", () => {
+    expect(reservedKeys(labelsClash)["manifest.config.mode.labels.title"]).toBe("X");
+    expect(reservedRefusals(labelsClash, {})).toEqual([
+      { key: "manifest.config.mode.labels.title", reason: "duplicate-key" },
+    ]);
+  });
+
+  test("presets never collide: their keys end in .label, no node field does", () => {
+    const m = withSchema({
+      properties: {
+        pic: {
+          presets: { title: { label: "X" }, label: { label: "Y" } },
+          properties: { presets: { title: "Z", properties: { title: { title: "W" } } } },
+        },
+      },
+    });
+    expect(reservedRefusals(m, {})).toEqual([]);
+    expect(Object.keys(reservedKeys(m))).toHaveLength(4);
+  });
+});
+
+describe("long descriptions", () => {
+  test("over 2000 characters is not reserved, refused or localized", () => {
+    const m = manifest({ description: "d".repeat(2500) });
+    expect(reservedKeys(m)["manifest.description"]).toBeUndefined();
+    expect(reservedRefusals(m, {})).toEqual([]);
+    expect(localizeManifest(m, () => "fr").description).toBeUndefined();
+  });
+  test("2000 characters is reserved", () => {
+    const m = manifest({ description: "d".repeat(2000) });
+    expect(reservedKeys(m)["manifest.description"]).toHaveLength(2000);
+    expect(reservedRefusals(m, {})).toEqual([]);
   });
 });
 

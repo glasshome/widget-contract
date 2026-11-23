@@ -11,7 +11,7 @@ export interface LocalizedManifestText {
 
 export type ReservedRefusal = {
   key: string;
-  reason: "icu" | "too-long" | "key-too-long" | "author-defined";
+  reason: "icu" | "too-long" | "key-too-long" | "author-defined" | "duplicate-key";
 };
 
 const MAX_KEY_CHARS = 128;
@@ -106,7 +106,7 @@ function walkNode(node: unknown, path: readonly string[], out: Entry[]): void {
 
 function collect(manifest: WidgetManifest): Entry[] {
   const out: Entry[] = [{ key: "manifest.name", value: manifest.name, set: () => {} }];
-  if (manifest.description !== undefined) {
+  if (manifest.description !== undefined && manifest.description.length <= MAX_TEXT_CHARS) {
     out.push({ key: "manifest.description", value: manifest.description, set: () => {} });
   }
   const examples: unknown = manifest["examples"];
@@ -126,7 +126,11 @@ function collect(manifest: WidgetManifest): Entry[] {
 }
 
 export function reservedKeys(manifest: WidgetManifest): Readonly<Record<string, string>> {
-  return Object.fromEntries(collect(manifest).map((e) => [e.key, e.value]));
+  const keys: Record<string, string> = {};
+  for (const { key, value } of collect(manifest)) {
+    if (!Object.hasOwn(keys, key)) keys[key] = value;
+  }
+  return keys;
 }
 
 export function reservedRefusals(
@@ -137,7 +141,13 @@ export function reservedRefusals(
   for (const key of Object.keys(authorEnglish)) {
     if (key.startsWith("manifest.")) refusals.push({ key, reason: "author-defined" });
   }
+  const seen = new Set<string>();
   for (const { key, value } of collect(manifest)) {
+    if (seen.has(key)) {
+      refusals.push({ key, reason: "duplicate-key" });
+      continue;
+    }
+    seen.add(key);
     if (key.length > MAX_KEY_CHARS) refusals.push({ key, reason: "key-too-long" });
     else if (value.includes("{")) refusals.push({ key, reason: "icu" });
     else if (value.length > (key === "manifest.name" ? MAX_NAME_CHARS : MAX_TEXT_CHARS)) {
@@ -164,7 +174,9 @@ export function localizeManifest(
   const result: LocalizedManifestText = { exampleLabels, schema };
   const localizedName = lookup("manifest.name");
   if (localizedName !== undefined) result.localizedName = localizedName;
-  const description = lookup("manifest.description");
-  if (description !== undefined) result.description = description;
+  if (manifest.description !== undefined && manifest.description.length <= MAX_TEXT_CHARS) {
+    const description = lookup("manifest.description");
+    if (description !== undefined) result.description = description;
+  }
   return result;
 }
