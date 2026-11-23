@@ -178,7 +178,8 @@ export function reservedLocaleRefusals(
     else if (value.includes("{")) refusals.push({ key, reason: "icu" });
     else if (value.length > (key === "manifest.name" ? MAX_NAME_CHARS : MAX_TEXT_CHARS)) {
       refusals.push({ key, reason: "too-long" });
-    } else if (key === "manifest.name" && nameRefusal(value)) refusals.push({ key, reason: "name" });
+    } else if (key === "manifest.name" && nameRefusal(value))
+      refusals.push({ key, reason: "name" });
   }
   return refusals;
 }
