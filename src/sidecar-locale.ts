@@ -1,4 +1,6 @@
-export function isSidecarLocale(tag: string, locales: readonly string[]): boolean {
-  if (tag === "en-XA") return false;
-  return tag === "en" || locales.includes(tag);
+export const LOCALES = ["en", "fr", "es", "de"] as const;
+export type Locale = (typeof LOCALES)[number];
+
+export function isSidecarLocale(tag: string): tag is Locale {
+  return (LOCALES as readonly string[]).includes(tag);
 }
