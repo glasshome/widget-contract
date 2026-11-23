@@ -4,11 +4,12 @@ import { join } from "node:path";
 import {
   localizeManifest,
   reservedKeys,
+  reservedKeysLeftOut,
   reservedLocaleRefusals,
   reservedRefusals,
   reservedSegment,
 } from "./catalog-reserved";
-import { CATALOG_LIMITS, KEY_PATTERN } from "./i18n";
+import { CATALOG_LIMITS, KEY_PATTERN, parseCatalog } from "./i18n";
 import { WIDGET_FIELD_LIMITS, widgetManifestSchema, type WidgetManifest } from "./manifest";
 
 const manifest = (extra: Record<string, unknown> = {}): WidgetManifest =>
@@ -138,7 +139,7 @@ describe("first-party manifests", () => {
         expect(key.length).toBeLessThanOrEqual(128);
         expect(KEY_PATTERN.test(key)).toBe(true);
       }
-      expect(reservedRefusals(parsed, {}).filter((r) => r.reason === "key-too-long")).toEqual([]);
+      expect(reservedKeysLeftOut(parsed)).toEqual([]);
     }
   });
 
@@ -157,42 +158,64 @@ describe("first-party manifests", () => {
 });
 
 describe("reservedRefusals", () => {
-  test("ICU syntax in a value", () => {
-    const m = withSchema({
-      properties: { mode: { labels: { heat_cool: "{n} rooms" } } },
-    });
-    expect(reservedRefusals(m, {})).toEqual([
-      { key: "manifest.config.mode.labels.heat_cool", reason: "icu" },
-    ]);
-  });
-
   test("an author key under manifest.", () => {
     expect(reservedRefusals(manifest(), { "manifest.name": "Mine", "app.title": "Fine" })).toEqual([
       { key: "manifest.name", reason: "author-defined" },
     ]);
   });
+});
 
-  test("a key past 128 characters", () => {
+describe("text the catalog grammar cannot carry", () => {
+  const leftOut = (m: WidgetManifest, key: string) => {
+    expect(reservedKeys(m)[key]).toBeUndefined();
+    expect(reservedKeysLeftOut(m)).toEqual([key]);
+    expect(reservedRefusals(m, {})).toEqual([]);
+  };
+  const label = (text: string) =>
+    withSchema({ properties: { mode: { labels: { heat_cool: text } } } });
+
+  test("ICU syntax, a tag, an angle bracket, a tab and a template stay English and are never refused", () => {
+    for (const text of [
+      "{n} rooms",
+      "3<sup>rd</sup>",
+      "a < b",
+      "Pick an <entity>",
+      "a\tb",
+      '{{ states("sensor.x") }}',
+    ]) {
+      leftOut(label(text), "manifest.config.mode.labels.heat_cool");
+    }
+  });
+
+  test("a description that published before 1.34 with a brace builds and stays English", () => {
+    leftOut(manifest({ description: 'Takes {"entity": "light.x"}' }), "manifest.description");
+  });
+
+  test("a key past 128 characters stays English", () => {
     let node: Record<string, unknown> = { title: "Deep" };
     for (let i = 0; i < 6; i++) node = { properties: { [`property_number_${i}_long`]: node } };
-    const refusals = reservedRefusals(withSchema(node), {});
-    expect(refusals).toHaveLength(1);
-    expect(refusals[0]?.reason).toBe("key-too-long");
+    const m = withSchema(node);
+    expect(reservedKeysLeftOut(m)).toHaveLength(1);
+    expect(reservedRefusals(m, {})).toEqual([]);
   });
 
-  test("a value past its limit", () => {
-    const m = manifest({ name: "n".repeat(WIDGET_FIELD_LIMITS.displayName + 1) });
-    expect(reservedRefusals(m, {})).toEqual([{ key: "manifest.name", reason: "too-long" }]);
-  });
-
-  test("limits match the catalog limits", () => {
+  test("a name over the name limit and a text over the catalog limit stay English", () => {
+    leftOut(manifest({ name: "n".repeat(WIDGET_FIELD_LIMITS.displayName + 1) }), "manifest.name");
     const long = "k".repeat(CATALOG_LIMITS.keyChars + 1);
-    const m = withSchema({ properties: { [long]: { title: "T" } } });
-    expect(reservedRefusals(m, {}).map((r) => r.reason)).toEqual(["key-too-long"]);
-    const text = withSchema({
-      properties: { mode: { title: "t".repeat(CATALOG_LIMITS.valueChars + 1) } },
-    });
-    expect(reservedRefusals(text, {}).map((r) => r.reason)).toEqual(["too-long"]);
+    expect(
+      reservedKeysLeftOut(withSchema({ properties: { [long]: { title: "T" } } })),
+    ).toHaveLength(1);
+    leftOut(
+      withSchema({ properties: { mode: { title: "t".repeat(CATALOG_LIMITS.valueChars + 1) } } }),
+      "manifest.config.mode.title",
+    );
+  });
+
+  test("every value it keeps parses as a catalog", () => {
+    const keys = reservedKeys(label("Heat and cool"));
+    expect(reservedKeysLeftOut(label("Heat and cool"))).toEqual([]);
+    const parsed = parseCatalog(JSON.stringify(keys));
+    expect(parsed.ok).toBe(true);
   });
 });
 
@@ -287,8 +310,18 @@ describe("reservedLocaleRefusals", () => {
       { key: "manifest.config.nope.title", reason: "unknown-key" },
     ]);
   });
-  test("ICU is refused", () => {
-    expect(reservedLocaleRefusals(m, { "manifest.description": "a {b}" })[0]?.reason).toBe("icu");
+  test("text the catalog grammar cannot carry is refused", () => {
+    for (const text of ["a {b}", "a <b> c", "a\tb"]) {
+      expect(reservedLocaleRefusals(m, { "manifest.description": text })[0]?.reason).toBe(
+        "grammar",
+      );
+    }
+  });
+  test("a translation of a key the manifest leaves out is unknown", () => {
+    const braced = { ...m, description: "Takes {entity}" };
+    expect(reservedLocaleRefusals(braced, { "manifest.description": "Prend" })).toEqual([
+      { key: "manifest.description", reason: "unknown-key" },
+    ]);
   });
   test("a name over the name limit and a text over the text limit are refused", () => {
     const long = reservedLocaleRefusals(m, {

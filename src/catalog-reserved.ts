@@ -1,5 +1,5 @@
+import { compileMessage, parseCatalog } from "./i18n";
 import { nameRefusal } from "./name-refusal";
-import type { WidgetManifest } from "./manifest";
 
 export type JsonSchema = Record<string, unknown>;
 
@@ -10,19 +10,19 @@ export interface LocalizedManifestText {
   schema: JsonSchema;
 }
 
+/** What reserving and localizing read of a manifest; the contract's, the SDK's and the CLI's manifest types all fit. */
+export interface ManifestWords {
+  name: string;
+  description?: string;
+  schema?: object;
+  examples?: unknown;
+}
+
 export type ReservedRefusal = {
   key: string;
-  reason:
-    | "icu"
-    | "too-long"
-    | "key-too-long"
-    | "author-defined"
-    | "duplicate-key"
-    | "unknown-key"
-    | "name";
+  reason: "grammar" | "too-long" | "author-defined" | "duplicate-key" | "unknown-key" | "name";
 };
 
-const MAX_KEY_CHARS = 128;
 const MAX_NAME_CHARS = 100;
 const MAX_TEXT_CHARS = 2000;
 
@@ -112,12 +112,12 @@ function walkNode(node: unknown, path: readonly string[], out: Entry[]): void {
   }
 }
 
-function collect(manifest: WidgetManifest): Entry[] {
+function collect(manifest: ManifestWords): Entry[] {
   const out: Entry[] = [{ key: "manifest.name", value: manifest.name, set: () => {} }];
   if (manifest.description !== undefined && manifest.description.length <= MAX_TEXT_CHARS) {
     out.push({ key: "manifest.description", value: manifest.description, set: () => {} });
   }
-  const examples: unknown = manifest["examples"];
+  const examples = manifest.examples;
   if (Array.isArray(examples)) {
     examples.forEach((example, i) => {
       if (isRecord(example) && typeof example["label"] === "string") {
@@ -133,16 +133,45 @@ function collect(manifest: WidgetManifest): Entry[] {
   return out;
 }
 
-export function reservedKeys(manifest: WidgetManifest): Readonly<Record<string, string>> {
-  const keys: Record<string, string> = {};
+/** The text the catalog grammar holds for `value` as plain words under `key`; undefined when it cannot. */
+function carried(key: string, value: string): string | undefined {
+  if (key === "manifest.name" && value.length > MAX_NAME_CHARS) return undefined;
+  const parsed = parseCatalog(JSON.stringify({ [key]: value }));
+  const text = parsed.ok ? parsed.value.get(key) : undefined;
+  if (text === undefined) return undefined;
+  const compiled = compileMessage(text);
+  if (!compiled.ok) return undefined;
+  const literal = compiled.value.filter((part): part is string => typeof part === "string");
+  return literal.length === compiled.value.length && literal.join("") === text ? text : undefined;
+}
+
+function firstPerKey(manifest: ManifestWords): Map<string, string> {
+  const first = new Map<string, string>();
   for (const { key, value } of collect(manifest)) {
-    if (!Object.hasOwn(keys, key)) keys[key] = value;
+    if (!first.has(key)) first.set(key, value);
+  }
+  return first;
+}
+
+/** The manifest's English under its reserved keys; a value the catalog grammar cannot carry stays out and shows untranslated. */
+export function reservedKeys(manifest: ManifestWords): Readonly<Record<string, string>> {
+  const keys: Record<string, string> = {};
+  for (const [key, value] of firstPerKey(manifest)) {
+    const text = carried(key, value);
+    if (text !== undefined) keys[key] = text;
   }
   return keys;
 }
 
+/** Reserved keys whose manifest text the catalog grammar cannot carry, so they stay English in every language. */
+export function reservedKeysLeftOut(manifest: ManifestWords): string[] {
+  return [...firstPerKey(manifest)]
+    .filter(([key, value]) => carried(key, value) === undefined)
+    .map(([key]) => key);
+}
+
 export function reservedRefusals(
-  manifest: WidgetManifest,
+  manifest: ManifestWords,
   authorEnglish: Record<string, string>,
 ): ReservedRefusal[] {
   const refusals: ReservedRefusal[] = [];
@@ -150,23 +179,15 @@ export function reservedRefusals(
     if (key.startsWith("manifest.")) refusals.push({ key, reason: "author-defined" });
   }
   const seen = new Set<string>();
-  for (const { key, value } of collect(manifest)) {
-    if (seen.has(key)) {
-      refusals.push({ key, reason: "duplicate-key" });
-      continue;
-    }
+  for (const { key } of collect(manifest)) {
+    if (seen.has(key)) refusals.push({ key, reason: "duplicate-key" });
     seen.add(key);
-    if (key.length > MAX_KEY_CHARS) refusals.push({ key, reason: "key-too-long" });
-    else if (value.includes("{")) refusals.push({ key, reason: "icu" });
-    else if (value.length > (key === "manifest.name" ? MAX_NAME_CHARS : MAX_TEXT_CHARS)) {
-      refusals.push({ key, reason: "too-long" });
-    }
   }
   return refusals;
 }
 
 export function reservedLocaleRefusals(
-  manifest: WidgetManifest,
+  manifest: ManifestWords,
   catalog: Record<string, string>,
 ): ReservedRefusal[] {
   const derived = reservedKeys(manifest);
@@ -174,27 +195,26 @@ export function reservedLocaleRefusals(
   for (const [key, value] of Object.entries(catalog)) {
     if (!key.startsWith("manifest.")) continue;
     if (!Object.hasOwn(derived, key)) refusals.push({ key, reason: "unknown-key" });
-    else if (key.length > MAX_KEY_CHARS) refusals.push({ key, reason: "key-too-long" });
-    else if (value.includes("{")) refusals.push({ key, reason: "icu" });
     else if (value.length > (key === "manifest.name" ? MAX_NAME_CHARS : MAX_TEXT_CHARS)) {
       refusals.push({ key, reason: "too-long" });
-    } else if (key === "manifest.name" && nameRefusal(value))
+    } else if (key === "manifest.name" && nameRefusal(value)) {
       refusals.push({ key, reason: "name" });
+    } else if (carried(key, value) === undefined) refusals.push({ key, reason: "grammar" });
   }
   return refusals;
 }
 
 export function localizeManifest(
-  manifest: WidgetManifest,
+  manifest: ManifestWords,
   lookup: (key: string) => string | undefined,
 ): LocalizedManifestText {
-  const schema: JsonSchema = structuredClone(manifest.schema ?? {});
+  const schema: JsonSchema = { ...structuredClone(manifest.schema ?? {}) };
   const entries = collect({ ...manifest, schema });
   for (const entry of entries) {
     const translated = lookup(entry.key);
     if (translated !== undefined) entry.set(translated);
   }
-  const examples: unknown = manifest["examples"];
+  const examples = manifest.examples;
   const exampleLabels = Array.isArray(examples)
     ? examples.map((_, i) => lookup(`manifest.examples.${i}.label`))
     : [];
