@@ -291,8 +291,19 @@ describe("describeCapability", () => {
 
   test("service narrowing is shown in plain words", () => {
     expect(describeCapability(lightOnOffOnly)).toBe(
-      "Control your lights — only: turn on, turn off",
+      "Control your lights (only turn on and turn off)",
     );
+  });
+
+  test("entity and service narrowing share one parenthesis", () => {
+    expect(
+      describeCapability({
+        domain: "light",
+        access: "control",
+        entities: ["light.kitchen"],
+        services: ["turn_on"],
+      }),
+    ).toBe("Control your lights (light.kitchen, only turn on)");
   });
 
   test("unknown domain falls back to readable generic", () => {

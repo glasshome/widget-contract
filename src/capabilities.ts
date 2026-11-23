@@ -165,12 +165,14 @@ export const DOMAIN_LABELS: Record<string, string> = {
 export function describeCapability(cap: CapabilityGrant): string {
   const label = DOMAIN_LABELS[cap.domain] ?? `${cap.domain.replace(/_/g, " ")} devices`;
   const verb = cap.access === "control" ? "Control" : "Read";
-  let sentence = `${verb} your ${label}`;
-  if (cap.entities) {
-    sentence += ` (${cap.entities.join(", ")})`;
-  }
-  if (cap.services) {
-    sentence += ` — only: ${cap.services.map((s) => s.replace(/_/g, " ")).join(", ")}`;
-  }
-  return sentence;
+  const scope = [
+    ...(cap.entities ? [cap.entities.join(", ")] : []),
+    ...(cap.services ? [`only ${englishList(cap.services.map((s) => s.replace(/_/g, " ")))}`] : []),
+  ];
+  return scope.length > 0 ? `${verb} your ${label} (${scope.join(", ")})` : `${verb} your ${label}`;
+}
+
+function englishList(items: readonly string[]): string {
+  if (items.length < 3) return items.join(" and ");
+  return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
 }
