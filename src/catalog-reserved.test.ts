@@ -217,7 +217,7 @@ describe("duplicate keys", () => {
       },
     });
     expect(reservedRefusals(m, {})).toEqual([]);
-    expect(Object.keys(reservedKeys(m))).toHaveLength(4);
+    expect(Object.keys(reservedKeys(m))).toHaveLength(7);
   });
 });
 
