@@ -170,7 +170,12 @@ export function describeCapability(cap: CapabilityGrant): string {
     sentence += ` (${cap.entities.join(", ")})`;
   }
   if (cap.services) {
-    sentence += ` — only: ${cap.services.map((s) => s.replace(/_/g, " ")).join(", ")}`;
+    sentence += ` (only ${englishList(cap.services.map((s) => s.replace(/_/g, " ")))})`;
   }
   return sentence;
+}
+
+function englishList(items: readonly string[]): string {
+  if (items.length < 3) return items.join(" and ");
+  return `${items.slice(0, -1).join(", ")}, and ${items.at(-1)}`;
 }
