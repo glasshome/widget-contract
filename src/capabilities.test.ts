@@ -295,6 +295,17 @@ describe("describeCapability", () => {
     );
   });
 
+  test("entity and service narrowing share one parenthesis", () => {
+    expect(
+      describeCapability({
+        domain: "light",
+        access: "control",
+        entities: ["light.kitchen"],
+        services: ["turn_on"],
+      }),
+    ).toBe("Control your lights (light.kitchen, only turn on)");
+  });
+
   test("unknown domain falls back to readable generic", () => {
     expect(describeCapability({ domain: "lawn_mower", access: "control" })).toBe(
       "Control your lawn mower devices",
