@@ -20,7 +20,14 @@ export interface ManifestWords {
 
 export type ReservedRefusal = {
   key: string;
-  reason: "grammar" | "too-long" | "author-defined" | "duplicate-key" | "unknown-key" | "name";
+  reason:
+    | "grammar"
+    | "too-long"
+    | "author-defined"
+    | "duplicate-key"
+    | "unknown-key"
+    | "left-out"
+    | "name";
 };
 
 const MAX_NAME_CHARS = 100;
@@ -191,10 +198,12 @@ export function reservedLocaleRefusals(
   catalog: Record<string, string>,
 ): ReservedRefusal[] {
   const derived = reservedKeys(manifest);
+  const leftOut = new Set(reservedKeysLeftOut(manifest));
   const refusals: ReservedRefusal[] = [];
   for (const [key, value] of Object.entries(catalog)) {
     if (!key.startsWith("manifest.")) continue;
-    if (!Object.hasOwn(derived, key)) refusals.push({ key, reason: "unknown-key" });
+    if (leftOut.has(key)) refusals.push({ key, reason: "left-out" });
+    else if (!Object.hasOwn(derived, key)) refusals.push({ key, reason: "unknown-key" });
     else if (value.length > (key === "manifest.name" ? MAX_NAME_CHARS : MAX_TEXT_CHARS)) {
       refusals.push({ key, reason: "too-long" });
     } else if (key === "manifest.name" && nameRefusal(value)) {

@@ -317,10 +317,10 @@ describe("reservedLocaleRefusals", () => {
       );
     }
   });
-  test("a translation of a key the manifest leaves out is unknown", () => {
+  test("a translation of a key the manifest leaves out is refused as left out", () => {
     const braced = { ...m, description: "Takes {entity}" };
     expect(reservedLocaleRefusals(braced, { "manifest.description": "Prend" })).toEqual([
-      { key: "manifest.description", reason: "unknown-key" },
+      { key: "manifest.description", reason: "left-out" },
     ]);
   });
   test("a name over the name limit and a text over the text limit are refused", () => {
