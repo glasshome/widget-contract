@@ -1,0 +1,104 @@
+{
+  "v": 1,
+  "messages": {
+    "plain": ["Living room"],
+    "greeting": [
+      "Hello ",
+      {
+        "arg": "name"
+      }
+    ],
+    "count": [
+      {
+        "plural": "count",
+        "branches": {
+          "=0": ["none"],
+          "one": [
+            {
+              "pound": true
+            },
+            " device"
+          ],
+          "other": [
+            {
+              "pound": true
+            },
+            " devices"
+          ]
+        }
+      }
+    ],
+    "kind": [
+      {
+        "select": "kind",
+        "branches": {
+          "heat": [
+            "Heating to ",
+            {
+              "arg": "temp"
+            }
+          ],
+          "cool": ["Cooling"],
+          "other": ["Idle"]
+        }
+      }
+    ]
+  },
+  "expected": [
+    {
+      "key": "plain",
+      "locale": "en",
+      "args": {},
+      "text": "Living room"
+    },
+    {
+      "key": "greeting",
+      "locale": "en",
+      "args": {
+        "name": "Ana"
+      },
+      "text": "Hello Ana"
+    },
+    {
+      "key": "count",
+      "locale": "en",
+      "args": {
+        "count": 0
+      },
+      "text": "none"
+    },
+    {
+      "key": "count",
+      "locale": "en",
+      "args": {
+        "count": 1
+      },
+      "text": "1 device"
+    },
+    {
+      "key": "count",
+      "locale": "de",
+      "args": {
+        "count": 1234
+      },
+      "text": "1.234 devices"
+    },
+    {
+      "key": "kind",
+      "locale": "en",
+      "args": {
+        "kind": "heat",
+        "temp": "21.5"
+      },
+      "text": "Heating to 21.5"
+    },
+    {
+      "key": "kind",
+      "locale": "en",
+      "args": {
+        "kind": "off"
+      },
+      "text": "Idle"
+    }
+  ]
+}

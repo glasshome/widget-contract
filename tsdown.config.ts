@@ -7,6 +7,8 @@ export default defineConfig({
     "src/i18n.ts",
     "src/i18n-format.ts",
     "src/catalog-build.ts",
+    "src/catalog-reserved.ts",
+    "src/state-texts.ts",
     "src/sdk-floor.ts",
     "src/dash-releases.ts",
     "src/state.ts",

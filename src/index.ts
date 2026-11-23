@@ -23,6 +23,8 @@ export {
   widgetManifestSchema,
   widgetVersionSchema,
 } from "./manifest";
+export { nameRefusal } from "./name-refusal";
+export { isSidecarLocale } from "./sidecar-locale";
 export type { HostProvidedModule } from "./shared-modules";
 export { HOST_PROVIDED_MODULES, isHostProvidedModule } from "./shared-modules";
 export type { VersionCheckResult } from "./version-compat";

@@ -1,5 +1,6 @@
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
 import type { CompiledMessage, MessagePart } from "./i18n-format";
+import { nameRefusal } from "./name-refusal";
 
 export const CATALOG_LIMITS = {
   keys: 2000,
@@ -28,7 +29,9 @@ type ValueReason =
   | "control_char"
   | "bidi"
   | "icu_syntax"
-  | "icu_feature";
+  | "icu_feature"
+  | "blank_name"
+  | "mixed_script_name";
 
 export type CatalogError =
   | { kind: "not_object" }
@@ -229,6 +232,13 @@ export function parseCatalog(text: string): Result<Catalog, CatalogError> {
     if (typeof raw !== "string") return fail({ kind: "bad_value", key, reason: "not_string" });
     const checked = checkValue(raw);
     if (!checked.ok) return fail({ kind: "bad_value", key, reason: checked.error });
+    if (key === "manifest.name") {
+      const refusal = nameRefusal(checked.value.text);
+      if (refusal) {
+        const reason = refusal === "blank" ? "blank_name" : "mixed_script_name";
+        return fail({ kind: "bad_value", key, reason });
+      }
+    }
     catalog.set(key, checked.value.text);
   }
   return succeed(catalog);
