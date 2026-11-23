@@ -1,5 +1,3 @@
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
 import { compileMessage, parseCatalog } from "./i18n";
 import type { BundledCatalog, CompiledCatalog, MessagePart } from "./i18n-format";
 
@@ -108,14 +106,21 @@ function compiledModule(language: string, catalog: CompiledCatalog, keyType: str
     : `${head}const catalog: CompiledCatalog = ${body};\n\nexport default catalog;\n`;
 }
 
+// Lazy, so the pure functions above stay importable where no node:fs exists.
+const node = () => ({
+  fs: process.getBuiltinModule("node:fs"),
+  path: process.getBuiltinModule("node:path"),
+});
+
 /** Every `<lang>.json` in `localesDir` compiled, plus the `en-XA` pseudo catalog made from English. */
 export function compileCatalogDir(localesDir: string): Record<string, CompiledCatalog> {
+  const { fs, path } = node();
   const catalogs: Record<string, CompiledCatalog> = {};
-  for (const name of readdirSync(localesDir).sort()) {
+  for (const name of fs.readdirSync(localesDir).sort()) {
     const language = SOURCE.exec(name)?.[1];
     if (!language) continue;
-    const file = join(localesDir, name);
-    catalogs[language] = compileCatalogSource(readFileSync(file, "utf-8"), file);
+    const file = path.join(localesDir, name);
+    catalogs[language] = compileCatalogSource(fs.readFileSync(file, "utf-8"), file);
   }
   const en = catalogs.en;
   if (!en) throw new Error(`${localesDir}: no en.json`);
@@ -127,12 +132,13 @@ export function compileCatalogDir(localesDir: string): Record<string, CompiledCa
  * files. `keyType` names the exported key union of the English module.
  */
 export function writeCatalogModules(localesDir: string, keyType: string): string[] {
+  const { fs, path } = node();
   const catalogs = compileCatalogDir(localesDir);
-  const out = join(localesDir, "compiled");
-  mkdirSync(out, { recursive: true });
+  const out = path.join(localesDir, "compiled");
+  fs.mkdirSync(out, { recursive: true });
   return Object.entries(catalogs).map(([language, catalog]) => {
-    const file = join(out, `${language}.ts`);
-    writeFileSync(file, compiledModule(language, catalog, keyType));
+    const file = path.join(out, `${language}.ts`);
+    fs.writeFileSync(file, compiledModule(language, catalog, keyType));
     return file;
   });
 }
