@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   bundledCatalogModule,
   catalogModule,
+  compileCatalogDir,
   writeCatalogModules,
   compileCatalogSource,
   pseudoCatalog,
@@ -84,6 +85,21 @@ describe("writeCatalogModules", () => {
     try {
       writeFileSync(join(dir, "fr.json"), JSON.stringify({ k: "x" }));
       expect(() => writeCatalogModules(dir, "DemoKey")).toThrow(/no en\.json/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("compileCatalogDir", () => {
+  test("compiles each language and adds the pseudo catalog", () => {
+    const dir = mkdtempSync(join(tmpdir(), "catalog-build-"));
+    try {
+      writeFileSync(join(dir, "en.json"), JSON.stringify({ k: "Hi" }));
+      writeFileSync(join(dir, "de.json"), JSON.stringify({ k: "Hallo" }));
+      const catalogs = compileCatalogDir(dir);
+      expect(Object.keys(catalogs).sort()).toEqual(["de", "en", "en-XA"]);
+      expect(catalogs.de).toEqual({ k: ["Hallo"] });
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
