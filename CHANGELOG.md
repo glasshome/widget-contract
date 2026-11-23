@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.9.0](https://github.com/glasshome/widget-contract/compare/v0.8.0...v0.9.0) (2026-11-23)
+
+
+### Features
+
+* catalog grammar, sanitizer and translation validator ([403f6e1](https://github.com/glasshome/widget-contract/commit/403f6e186d822434f2cf0e92fcc20e780bb23274))
+* **i18n:** catalog builder for any bundler ([59e8f7e](https://github.com/glasshome/widget-contract/commit/59e8f7ed3cacc7c32a316ce241483dc17bde65a4))
+* **i18n:** catalog grammar, validator and a parser-free formatter ([30e9f3c](https://github.com/glasshome/widget-contract/commit/30e9f3c94065fc3ca281bc49399a1d02218fa71d))
+* **i18n:** compiled messages and a parser-free formatter ([1d6be87](https://github.com/glasshome/widget-contract/commit/1d6be877d58d0a52055932568272f2b7f7827a53))
+* **i18n:** reject translations that splice a plural or select block into a word ([5991a5b](https://github.com/glasshome/widget-contract/commit/5991a5b766bfb6608921dae4fa6347e3d809a11d))
+* validator keeps glossary terms and every source plural category the locale has ([434009b](https://github.com/glasshome/widget-contract/commit/434009b14770291050a06de4a5927bde8c9ae0ff))
+
+
+### Bug Fixes
+
+* **capabilities:** a service-narrowed grant reads (only a and b), with no dash ([08c5c19](https://github.com/glasshome/widget-contract/commit/08c5c1971b8f552d3bcfbce30ffdae9968af83b5))
+* **capabilities:** an entity- and service-narrowed grant reads one parenthesis, (light.kitchen, only turn on) ([0c29129](https://github.com/glasshome/widget-contract/commit/0c29129df082f2df55a47df74fc5ad104eb4454e))
+* type the plural category set as strings ([8dabcac](https://github.com/glasshome/widget-contract/commit/8dabcacc0ef4e6e04acc9d1ae5f093eaaac79721))
+* validator checks each plural, folds width variants, refuses markup, pins argument kinds and locale ([af54720](https://github.com/glasshome/widget-contract/commit/af547209abfe52d5ab721b0c46c02941562a45fd))
+
 ## [0.8.0](https://github.com/glasshome/widget-contract/compare/v0.7.0...v0.8.0) (2026-11-17)
 
 
