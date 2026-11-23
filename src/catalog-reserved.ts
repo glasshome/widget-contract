@@ -1,3 +1,4 @@
+import { nameRefusal } from "./name-refusal";
 import type { WidgetManifest } from "./manifest";
 
 export type JsonSchema = Record<string, unknown>;
@@ -11,7 +12,14 @@ export interface LocalizedManifestText {
 
 export type ReservedRefusal = {
   key: string;
-  reason: "icu" | "too-long" | "key-too-long" | "author-defined" | "duplicate-key";
+  reason:
+    | "icu"
+    | "too-long"
+    | "key-too-long"
+    | "author-defined"
+    | "duplicate-key"
+    | "unknown-key"
+    | "name";
 };
 
 const MAX_KEY_CHARS = 128;
@@ -153,6 +161,24 @@ export function reservedRefusals(
     else if (value.length > (key === "manifest.name" ? MAX_NAME_CHARS : MAX_TEXT_CHARS)) {
       refusals.push({ key, reason: "too-long" });
     }
+  }
+  return refusals;
+}
+
+export function reservedLocaleRefusals(
+  manifest: WidgetManifest,
+  catalog: Record<string, string>,
+): ReservedRefusal[] {
+  const derived = reservedKeys(manifest);
+  const refusals: ReservedRefusal[] = [];
+  for (const [key, value] of Object.entries(catalog)) {
+    if (!key.startsWith("manifest.")) continue;
+    if (!Object.hasOwn(derived, key)) refusals.push({ key, reason: "unknown-key" });
+    else if (key.length > MAX_KEY_CHARS) refusals.push({ key, reason: "key-too-long" });
+    else if (value.includes("{")) refusals.push({ key, reason: "icu" });
+    else if (value.length > (key === "manifest.name" ? MAX_NAME_CHARS : MAX_TEXT_CHARS)) {
+      refusals.push({ key, reason: "too-long" });
+    } else if (key === "manifest.name" && nameRefusal(value)) refusals.push({ key, reason: "name" });
   }
   return refusals;
 }

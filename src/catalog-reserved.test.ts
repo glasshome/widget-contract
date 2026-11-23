@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   localizeManifest,
   reservedKeys,
+  reservedLocaleRefusals,
   reservedRefusals,
   reservedSegment,
 } from "./catalog-reserved";
@@ -264,5 +265,40 @@ describe("localizeManifest", () => {
     expect(out.description).toBe("fr:manifest.description");
     expect(out.exampleLabels).toEqual(["fr:manifest.examples.0.label"]);
     expect(JSON.stringify(out.schema)).toContain("fr:manifest.config.mode.labels.heat_cool");
+  });
+});
+
+describe("reservedLocaleRefusals", () => {
+  const m = {
+    name: "Clock",
+    description: "A clock",
+    minSize: { w: 1, h: 1 },
+    maxSize: { w: 2, h: 2 },
+    sdkVersion: "^1.34.0",
+  } as WidgetManifest;
+
+  test("a derived key with plain text passes and other keys are ignored", () => {
+    expect(
+      reservedLocaleRefusals(m, { "manifest.name": "Horloge", greeting: "Salut {name}" }),
+    ).toEqual([]);
+  });
+  test("an unknown manifest key is refused", () => {
+    expect(reservedLocaleRefusals(m, { "manifest.config.nope.title": "x" })).toEqual([
+      { key: "manifest.config.nope.title", reason: "unknown-key" },
+    ]);
+  });
+  test("ICU is refused", () => {
+    expect(reservedLocaleRefusals(m, { "manifest.description": "a {b}" })[0]?.reason).toBe("icu");
+  });
+  test("a name over the name limit and a text over the text limit are refused", () => {
+    const long = reservedLocaleRefusals(m, {
+      "manifest.name": "n".repeat(101),
+      "manifest.description": "d".repeat(2001),
+    });
+    expect(long.map((r) => r.reason)).toEqual(["too-long", "too-long"]);
+    expect(reservedLocaleRefusals(m, { "manifest.description": "d".repeat(2000) })).toEqual([]);
+  });
+  test("a blank name is refused", () => {
+    expect(reservedLocaleRefusals(m, { "manifest.name": "\u3164" })[0]?.reason).toBe("name");
   });
 });
