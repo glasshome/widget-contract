@@ -11,6 +11,7 @@ export default defineConfig({
     "src/state-texts.ts",
     "src/sdk-floor.ts",
     "src/dash-releases.ts",
+    "src/sidecars.ts",
     "src/state.ts",
   ],
   format: ["esm"],

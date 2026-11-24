@@ -92,6 +92,12 @@ export const widgetVersionSchema = z
   .max(WIDGET_FIELD_LIMITS.version)
   .refine((v) => valid(v) === v, "Must be a semver version like 1.2.0");
 
+export const SidecarFileSchema = z.object({
+  path: z.string().min(1).max(128),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/),
+  bytes: z.number().int().positive(),
+});
+
 export const PublishRequestSchema = z.object({
   ...widgetCoreShape,
   action: z.literal("request"),
@@ -107,11 +113,13 @@ export const PublishRequestSchema = z.object({
   cssSize: z.number().int().positive().optional(),
   cssSha256Hash: z.string().min(1).optional(),
   manifestJson: z.string().min(1),
+  files: z.array(SidecarFileSchema).max(64).optional(),
 });
 
 export const PublishConfirmSchema = z.object({
   action: z.literal("confirm"),
   versionId: z.string().min(1),
+  files: z.array(SidecarFileSchema).max(64).optional(),
 });
 
 export const PublishBodySchema = z.discriminatedUnion("action", [

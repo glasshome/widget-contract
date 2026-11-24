@@ -72,6 +72,11 @@
       "types": "./dist/sdk-floor.d.mts",
       "import": "./dist/sdk-floor.mjs"
     },
+    "./sidecars": {
+      "@glasshome/source": "./src/sidecars.ts",
+      "types": "./dist/sidecars.d.mts",
+      "import": "./dist/sidecars.mjs"
+    },
     "./state": {
       "@glasshome/source": "./src/state.ts",
       "types": "./dist/state.d.mts",
