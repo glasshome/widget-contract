@@ -33,6 +33,12 @@ type ValueReason =
   | "blank_name"
   | "mixed_script_name";
 
+const NAME_REASON: Record<NonNullable<ReturnType<typeof nameRefusal>>, ValueReason> = {
+  blank: "blank_name",
+  control: "control_char",
+  "mixed-script": "mixed_script_name",
+};
+
 export type CatalogError =
   | { kind: "not_object" }
   | { kind: "too_many_keys"; count: number }
@@ -234,10 +240,7 @@ export function parseCatalog(text: string): Result<Catalog, CatalogError> {
     if (!checked.ok) return fail({ kind: "bad_value", key, reason: checked.error });
     if (key === "manifest.name") {
       const refusal = nameRefusal(checked.value.text);
-      if (refusal) {
-        const reason = refusal === "blank" ? "blank_name" : "mixed_script_name";
-        return fail({ kind: "bad_value", key, reason });
-      }
+      if (refusal) return fail({ kind: "bad_value", key, reason: NAME_REASON[refusal] });
     }
     catalog.set(key, checked.value.text);
   }
