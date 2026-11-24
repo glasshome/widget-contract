@@ -8,7 +8,7 @@ export {
   matchesCapability,
   matchesRead,
 } from "./capabilities";
-export type { WidgetManifest } from "./manifest";
+export type { SidecarFile, WidgetManifest } from "./manifest";
 export {
   formatSchemaError,
   GridSizeSchema,
