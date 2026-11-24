@@ -9,6 +9,9 @@ export const CATALOG_LIMITS = {
   fileBytes: 262144,
 } as const;
 
+/** A source this short or shorter is exempt from the translation length ratio. */
+export const RATIO_FREE_CHARS = 8;
+
 export const KEY_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*(?:\.[a-z0-9]+(?:[-_][a-z0-9]+)*)*$/;
 
 const MAX_ICU_DEPTH = 8;
@@ -387,7 +390,7 @@ export function validateTranslation(
     }
   }
 
-  if (src.value.text.length > 8) {
+  if (src.value.text.length > RATIO_FREE_CHARS) {
     const ratio = out.value.text.length / src.value.text.length;
     if (ratio > rules.maxRatio) return fail({ kind: "length_ratio", ratio });
   }
