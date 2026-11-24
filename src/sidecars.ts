@@ -1,3 +1,5 @@
+import { LOCALES } from "./sidecar-locale";
+
 export const FILE_PATH = /^files\/[a-z0-9][a-z0-9-]{0,63}\.(png|jpg|webp)$/;
 export const LOCALE_PATH = /^locales\/([a-z]{2}(?:-[A-Z]{2})?)\.json$/;
 
@@ -8,6 +10,8 @@ export const SIDECAR_LIMITS = {
   files: 64,
   side: 4096,
   pixels: 16_777_216,
+  // The Hub adds one machine catalog per locale but the English source, outside the author's counts.
+  machineCatalogs: LOCALES.length - 1,
 } as const;
 
 const RESERVED = new Set(["index.js", "index.css"]);
