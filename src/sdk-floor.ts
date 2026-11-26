@@ -68,27 +68,28 @@ export function importsOf(code: string, specifier: string): Set<string> {
   return readImports(code, specifier, code.match(quoted)?.length ?? 0);
 }
 
+/** What one import brings in from `specifier`, and whether it names `specifier` itself. */
+function readImport(
+  code: string,
+  imp: ImportSpecifier,
+  specifier: string,
+): { names: string[]; ours: boolean } {
+  if (imp.t === ImportType.ImportMeta) return { names: [], ours: false };
+  const dynamic = isDynamic(imp);
+  if (dynamic && imp.n === undefined) return { names: ["*"], ours: false };
+  if (imp.n !== specifier) return { names: [], ours: false };
+  if (dynamic || imp.t !== ImportType.Static) return { names: ["*"], ours: true };
+  const names = new Set<string>();
+  readStaticClause(code.slice(imp.ss, imp.se), names);
+  return { names: [...names], ours: true };
+}
+
 function readImports(code: string, specifier: string, mentions: number): Set<string> {
   const lexed = lex(code);
   if (!lexed) return new Set(["*"]);
-  const names = new Set<string>();
-  let reported = 0;
-  for (const imp of lexed[0]) {
-    if (imp.t === ImportType.ImportMeta) continue;
-    if (isDynamic(imp)) {
-      if (imp.n === undefined) names.add("*");
-      else if (imp.n === specifier) {
-        reported++;
-        names.add("*");
-      }
-      continue;
-    }
-    if (imp.n !== specifier) continue;
-    reported++;
-    if (imp.t === ImportType.Static) readStaticClause(code.slice(imp.ss, imp.se), names);
-    else names.add("*");
-  }
-  if (mentions > reported) names.add("*");
+  const reads = lexed[0].map((imp) => readImport(code, imp, specifier));
+  const names = new Set(reads.flatMap((r) => r.names));
+  if (mentions > reads.filter((r) => r.ours).length) names.add("*");
   return names;
 }
 
