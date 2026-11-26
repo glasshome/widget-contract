@@ -57,6 +57,16 @@ function isDynamic(imp: ImportSpecifier): boolean {
 
 /** What a built bundle imports from the SDK, by exported name; `*` when it cannot be listed. */
 export function sdkImportsOf(code: string): Set<string> {
+  return readImports(code, SDK, code.split(SDK).length - 1);
+}
+
+/** What a built bundle imports from exactly `specifier`, by exported name; `*` when it cannot be listed. */
+export function importsOf(code: string, specifier: string): Set<string> {
+  const quoted = new RegExp(`(["'\`])${specifier.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&")}\\1`, "g");
+  return readImports(code, specifier, code.match(quoted)?.length ?? 0);
+}
+
+function readImports(code: string, specifier: string, mentions: number): Set<string> {
   const lexed = lex(code);
   if (!lexed) return new Set(["*"]);
   const names = new Set<string>();
@@ -65,18 +75,18 @@ export function sdkImportsOf(code: string): Set<string> {
     if (imp.t === ImportType.ImportMeta) continue;
     if (isDynamic(imp)) {
       if (imp.n === undefined) names.add("*");
-      else if (imp.n === SDK) {
+      else if (imp.n === specifier) {
         reported++;
         names.add("*");
       }
       continue;
     }
-    if (imp.n !== SDK) continue;
+    if (imp.n !== specifier) continue;
     reported++;
     if (imp.t === ImportType.Static) readStaticClause(code.slice(imp.ss, imp.se), names);
     else names.add("*");
   }
-  if (code.split(SDK).length - 1 > reported) names.add("*");
+  if (mentions > reported) names.add("*");
   return names;
 }
 

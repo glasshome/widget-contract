@@ -1,8 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { deriveFloor, exportNames, sdkImportsOf, uiImportsOf } from "./sdk-floor";
+import { deriveFloor, exportNames, importsOf, sdkImportsOf, uiImportsOf } from "./sdk-floor";
 
 const minified = `import{Widget as a,useDaylight as b}from"@glasshome/widget-sdk";`;
 const spaced = `import { Badge as p, useDaylight as pe, useService as O } from "@glasshome/widget-sdk";`;
+
+describe("importsOf", () => {
+  test("reads the names imported from exactly the given module", () => {
+    const code = `import{insert as a}from"@solidjs/web";import{createSignal as b}from"solid-js";import{x}from"solid-js/store";`;
+    expect([...importsOf(code, "solid-js")]).toEqual(["createSignal"]);
+    expect([...importsOf(code, "@solidjs/web")]).toEqual(["insert"]);
+  });
+
+  test("a mention the lexer did not report as an import counts as every export", () => {
+    expect(importsOf(`const m="@solidjs/web";`, "@solidjs/web").has("*")).toBe(true);
+  });
+});
 
 describe("sdkImportsOf", () => {
   test("reads imported names, not local aliases, in minified and spaced output", () => {
