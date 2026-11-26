@@ -10,6 +10,7 @@ export default defineConfig({
     "src/sdk-floor.ts",
     "src/dash-releases.ts",
     "src/state.ts",
+    "src/widget-surface.ts",
   ],
   format: ["esm"],
   dts: true,

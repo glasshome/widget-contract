@@ -66,6 +66,11 @@
       "@glasshome/source": "./src/state.ts",
       "types": "./dist/state.d.mts",
       "import": "./dist/state.mjs"
+    },
+    "./widget-surface": {
+      "@glasshome/source": "./src/widget-surface.ts",
+      "types": "./dist/widget-surface.d.mts",
+      "import": "./dist/widget-surface.mjs"
     }
   },
   "publishConfig": {
