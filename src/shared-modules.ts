@@ -11,10 +11,7 @@
  * `@glasshome/sync-layer*` entries are served for the SDK's own use; widgets
  * are blocked from importing them directly by the SDK's build guard.
  */
-export const HOST_PROVIDED_MODULES = [
-  "solid-js",
-  "solid-js/web",
-  "solid-js/store",
+const SHARED_MODULES = [
   // Must be a singleton: the <iconify-icon> custom element, its icon storage,
   // and the API provider config are module-local. A second bundled copy splits
   // registration from rendering and every icon falls back to a network fetch.
@@ -26,11 +23,30 @@ export const HOST_PROVIDED_MODULES = [
   "@glasshome/sync-layer",
 ] as const;
 
-export type HostProvidedModule = (typeof HOST_PROVIDED_MODULES)[number];
+const BY_MAJOR = {
+  1: ["solid-js", "solid-js/web", "solid-js/store", ...SHARED_MODULES],
+  2: ["solid-js", "@solidjs/web", ...SHARED_MODULES],
+} as const;
 
-const HOST_PROVIDED_SET: ReadonlySet<string> = new Set(HOST_PROVIDED_MODULES);
+export type SdkMajor = keyof typeof BY_MAJOR;
 
-/** True when the host import map serves `id`, so widget builds must not bundle it. */
-export function isHostProvidedModule(id: string): boolean {
-  return HOST_PROVIDED_SET.has(id);
+/** The specifiers the host serves to widgets built for SDK `major`. */
+export function hostProvidedModules(major: SdkMajor): readonly string[] {
+  return BY_MAJOR[major];
+}
+
+/** Every specifier any major serves: what a widget build leaves external whichever SDK it targets. */
+export const HOST_PROVIDED_MODULES: readonly string[] = [
+  ...new Set([...BY_MAJOR[1], ...BY_MAJOR[2]]),
+];
+
+const SETS: Record<SdkMajor, ReadonlySet<string>> = {
+  1: new Set(BY_MAJOR[1]),
+  2: new Set(BY_MAJOR[2]),
+};
+const ANY_SET: ReadonlySet<string> = new Set(HOST_PROVIDED_MODULES);
+
+/** True when the host import map serves `id` (to widgets of `major`, or of any major), so widget builds must not bundle it. */
+export function isHostProvidedModule(id: string, major?: SdkMajor): boolean {
+  return (major === undefined ? ANY_SET : SETS[major]).has(id);
 }

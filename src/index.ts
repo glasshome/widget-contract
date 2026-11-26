@@ -23,7 +23,11 @@ export {
   widgetManifestSchema,
   widgetVersionSchema,
 } from "./manifest";
-export type { HostProvidedModule } from "./shared-modules";
-export { HOST_PROVIDED_MODULES, isHostProvidedModule } from "./shared-modules";
+export {
+  HOST_PROVIDED_MODULES,
+  hostProvidedModules,
+  isHostProvidedModule,
+  type SdkMajor,
+} from "./shared-modules";
 export type { VersionCheckResult } from "./version-compat";
 export { checkSdkCompat, requiresCapabilities, satisfiesSdk } from "./version-compat";
