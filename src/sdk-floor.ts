@@ -192,6 +192,18 @@ function compareVersions(a: Version, b: Version): number {
   return comparePrerelease(a.prerelease, b.prerelease);
 }
 
+/** The SDK version a build stands for: the package version, or the first release of a major the SDK declares ahead of it. */
+export function buildSdkVersion(pkg: {
+  version?: unknown;
+  glasshome?: { sdkMajor?: unknown };
+}): string | null {
+  if (typeof pkg.version !== "string") return null;
+  const version = parseVersion(pkg.version);
+  const major = pkg.glasshome?.sdkMajor;
+  if (!version || typeof major !== "number" || major <= version.major) return pkg.version;
+  return `${major}.0.0`;
+}
+
 /** Semver order; unparseable versions sort last. */
 export function compareSdkVersions(a: string, b: string): number {
   const pa = parseVersion(a);
