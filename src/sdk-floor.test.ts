@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { deriveFloor, exportNames, importsOf, sdkImportsOf, uiImportsOf } from "./sdk-floor";
+import {
+  buildSdkVersion,
+  deriveFloor,
+  exportNames,
+  importsOf,
+  sdkImportsOf,
+  uiImportsOf,
+} from "./sdk-floor";
 
 const minified = `import{Widget as a,useDaylight as b}from"@glasshome/widget-sdk";`;
 const spaced = `import { Badge as p, useDaylight as pe, useService as O } from "@glasshome/widget-sdk";`;
@@ -300,5 +307,20 @@ describe("deriveFloor", () => {
     ).toEqual({
       refused: ["Widget"],
     });
+  });
+});
+
+describe("buildSdkVersion", () => {
+  test("is the package version when no major is declared ahead of it", () => {
+    expect(buildSdkVersion({ version: "1.34.1" })).toBe("1.34.1");
+    expect(buildSdkVersion({ version: "2.1.0", glasshome: { sdkMajor: 2 } })).toBe("2.1.0");
+  });
+
+  test("is the first release of a declared major the version has not reached", () => {
+    expect(buildSdkVersion({ version: "1.34.1", glasshome: { sdkMajor: 2 } })).toBe("2.0.0");
+  });
+
+  test("is null without a version", () => {
+    expect(buildSdkVersion({ glasshome: { sdkMajor: 2 } })).toBeNull();
   });
 });
