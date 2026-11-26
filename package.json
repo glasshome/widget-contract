@@ -57,6 +57,11 @@
       "types": "./dist/dash-releases.d.mts",
       "import": "./dist/dash-releases.mjs"
     },
+    "./sdk-version": {
+      "@glasshome/source": "./src/sdk-version.ts",
+      "types": "./dist/sdk-version.d.mts",
+      "import": "./dist/sdk-version.mjs"
+    },
     "./sdk-floor": {
       "@glasshome/source": "./src/sdk-floor.ts",
       "types": "./dist/sdk-floor.d.mts",

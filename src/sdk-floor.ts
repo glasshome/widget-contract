@@ -1,5 +1,7 @@
 import { type ImportSpecifier, ImportType, initSync, parse } from "es-module-lexer";
 
+export { buildSdkVersion } from "./sdk-version";
+
 const SDK = "@glasshome/widget-sdk";
 const UI_SOLID = "@glasshome/ui/solid";
 
@@ -190,18 +192,6 @@ function compareVersions(a: Version, b: Version): number {
   if (a.prerelease === undefined) return b.prerelease === undefined ? 0 : 1;
   if (b.prerelease === undefined) return -1;
   return comparePrerelease(a.prerelease, b.prerelease);
-}
-
-/** The SDK version a build stands for: the package version, or the first release of a major the SDK declares ahead of it. */
-export function buildSdkVersion(pkg: {
-  version?: unknown;
-  glasshome?: { sdkMajor?: unknown };
-}): string | null {
-  if (typeof pkg.version !== "string") return null;
-  const version = parseVersion(pkg.version);
-  const major = pkg.glasshome?.sdkMajor;
-  if (!version || typeof major !== "number" || major <= version.major) return pkg.version;
-  return `${major}.0.0`;
 }
 
 /** Semver order; unparseable versions sort last. */

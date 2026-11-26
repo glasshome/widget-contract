@@ -9,6 +9,7 @@ export default defineConfig({
     "src/catalog-build.ts",
     "src/sdk-floor.ts",
     "src/dash-releases.ts",
+    "src/sdk-version.ts",
     "src/state.ts",
     "src/widget-surface.ts",
   ],
