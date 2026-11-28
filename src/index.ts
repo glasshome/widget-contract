@@ -8,7 +8,7 @@ export {
   matchesCapability,
   matchesRead,
 } from "./capabilities";
-export type { WidgetManifest } from "./manifest";
+export type { SidecarFile, WidgetManifest } from "./manifest";
 export {
   formatSchemaError,
   GridSizeSchema,
@@ -23,6 +23,9 @@ export {
   widgetManifestSchema,
   widgetVersionSchema,
 } from "./manifest";
+export { nameRefusal } from "./name-refusal";
+export type { Locale } from "./sidecar-locale";
+export { isSidecarLocale, LOCALES } from "./sidecar-locale";
 export type { HostProvidedModule } from "./shared-modules";
 export { HOST_PROVIDED_MODULES, isHostProvidedModule } from "./shared-modules";
 export type { VersionCheckResult } from "./version-compat";

@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { compileMessage, type Result } from "./i18n";
-import { formatMessage, formatParts, type CompiledMessage } from "./i18n-format";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { formatMessage, formatParts, readBundled, type CompiledMessage } from "./i18n-format";
 
 const env = (l: string) => ({
   plural: (n: number) => new Intl.PluralRules(l).select(n),
@@ -48,5 +50,40 @@ describe("formatParts", () => {
       " now",
     ]);
     expect(formatParts(compile("a {x} b"), { x: "-" }, env("en"))).toEqual(["a - b"]);
+  });
+});
+
+describe("readBundled", () => {
+  const fixture: unknown = JSON.parse(
+    readFileSync(join(import.meta.dir, "../tests/fixtures/bundled-v1.json"), "utf8"),
+  );
+  const expected = (
+    fixture as {
+      expected: {
+        key: string;
+        locale: string;
+        args: Record<string, string | number>;
+        text: string;
+      }[];
+    }
+  ).expected;
+
+  test("the committed v1 catalog formats to its recorded strings", () => {
+    const messages = readBundled(fixture);
+    expect(messages).not.toBeNull();
+    expect(expected.length).toBeGreaterThan(4);
+    for (const row of expected) {
+      const message = messages?.[row.key];
+      expect(message).toBeDefined();
+      if (message) expect(formatMessage(message, row.args, env(row.locale))).toBe(row.text);
+    }
+  });
+
+  test("an unknown version or shape is no catalog", () => {
+    expect(readBundled({ v: 2, messages: {} })).toBeNull();
+    expect(readBundled({ v: 1, messages: [] })).toBeNull();
+    expect(readBundled({ v: 1 })).toBeNull();
+    expect(readBundled(null)).toBeNull();
+    expect(readBundled("x")).toBeNull();
   });
 });

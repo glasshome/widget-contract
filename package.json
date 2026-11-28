@@ -52,6 +52,21 @@
       "types": "./dist/i18n-format.d.mts",
       "import": "./dist/i18n-format.mjs"
     },
+    "./catalog-keys": {
+      "@glasshome/source": "./src/catalog-keys.ts",
+      "types": "./dist/catalog-keys.d.mts",
+      "import": "./dist/catalog-keys.mjs"
+    },
+    "./catalog-reserved": {
+      "@glasshome/source": "./src/catalog-reserved.ts",
+      "types": "./dist/catalog-reserved.d.mts",
+      "import": "./dist/catalog-reserved.mjs"
+    },
+    "./state-texts": {
+      "@glasshome/source": "./src/state-texts.ts",
+      "types": "./dist/state-texts.d.mts",
+      "import": "./dist/state-texts.mjs"
+    },
     "./dash-releases": {
       "@glasshome/source": "./src/dash-releases.ts",
       "types": "./dist/dash-releases.d.mts",
@@ -61,6 +76,11 @@
       "@glasshome/source": "./src/sdk-floor.ts",
       "types": "./dist/sdk-floor.d.mts",
       "import": "./dist/sdk-floor.mjs"
+    },
+    "./sidecars": {
+      "@glasshome/source": "./src/sidecars.ts",
+      "types": "./dist/sidecars.d.mts",
+      "import": "./dist/sidecars.mjs"
     },
     "./state": {
       "@glasshome/source": "./src/state.ts",

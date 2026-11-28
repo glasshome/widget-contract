@@ -1,5 +1,6 @@
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
 import type { CompiledMessage, MessagePart } from "./i18n-format";
+import { nameRefusal } from "./name-refusal";
 
 export const CATALOG_LIMITS = {
   keys: 2000,
@@ -7,6 +8,9 @@ export const CATALOG_LIMITS = {
   valueChars: 2000,
   fileBytes: 262144,
 } as const;
+
+/** A source this short or shorter is exempt from the translation length ratio. */
+export const RATIO_FREE_CHARS = 8;
 
 export const KEY_PATTERN = /^[a-z0-9]+(?:[-_][a-z0-9]+)*(?:\.[a-z0-9]+(?:[-_][a-z0-9]+)*)*$/;
 
@@ -28,7 +32,15 @@ type ValueReason =
   | "control_char"
   | "bidi"
   | "icu_syntax"
-  | "icu_feature";
+  | "icu_feature"
+  | "blank_name"
+  | "mixed_script_name";
+
+const NAME_REASON: Record<NonNullable<ReturnType<typeof nameRefusal>>, ValueReason> = {
+  blank: "blank_name",
+  control: "control_char",
+  "mixed-script": "mixed_script_name",
+};
 
 export type CatalogError =
   | { kind: "not_object" }
@@ -229,6 +241,10 @@ export function parseCatalog(text: string): Result<Catalog, CatalogError> {
     if (typeof raw !== "string") return fail({ kind: "bad_value", key, reason: "not_string" });
     const checked = checkValue(raw);
     if (!checked.ok) return fail({ kind: "bad_value", key, reason: checked.error });
+    if (key === "manifest.name") {
+      const refusal = nameRefusal(checked.value.text);
+      if (refusal) return fail({ kind: "bad_value", key, reason: NAME_REASON[refusal] });
+    }
     catalog.set(key, checked.value.text);
   }
   return succeed(catalog);
@@ -374,7 +390,7 @@ export function validateTranslation(
     }
   }
 
-  if (src.value.text.length > 8) {
+  if (src.value.text.length > RATIO_FREE_CHARS) {
     const ratio = out.value.text.length / src.value.text.length;
     if (ratio > rules.maxRatio) return fail({ kind: "length_ratio", ratio });
   }

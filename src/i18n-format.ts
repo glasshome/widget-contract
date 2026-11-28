@@ -8,6 +8,17 @@ export type MessagePart =
 export type CompiledMessage = readonly MessagePart[];
 export type CompiledCatalog = Readonly<Record<string, CompiledMessage>>;
 
+export type BundledCatalog = { v: 1; messages: CompiledCatalog };
+
+export function readBundled(value: unknown): CompiledCatalog | null {
+  if (typeof value !== "object" || value === null) return null;
+  const { v, messages } = value as { v?: unknown; messages?: unknown };
+  if (v !== 1 || typeof messages !== "object" || messages === null || Array.isArray(messages)) {
+    return null;
+  }
+  return messages as CompiledCatalog;
+}
+
 export interface FormatEnv {
   plural(n: number): string;
   number(n: number): string;
